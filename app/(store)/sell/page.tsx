@@ -3,9 +3,13 @@ import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
 import { PageHero } from "@/components/PageHero";
 import { SellEstimator } from "@/components/SellEstimator";
-import { whatsappLink } from "@/lib/catalog";
+import { getStoreSettings } from "@/lib/data";
+import { waLink } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Sell your phone, gadget or car" };
+export const metadata: Metadata = {
+  title: "Sell your phone, gadget or car",
+  description: "Get an instant, graded cash offer for your iPhone. Free pickup and paid within 48 hours of inspection.",
+};
 
 const how: { icon: IconName; title: string; body: string }[] = [
   { icon: "tag", title: "Describe it", body: "Pick your model, storage and condition. Takes under a minute." },
@@ -14,7 +18,8 @@ const how: { icon: IconName; title: string; body: string }[] = [
   { icon: "wallet", title: "Get paid in 48 hours", body: "Bank transfer as soon as your device passes inspection." },
 ];
 
-export default function SellPage() {
+export default async function SellPage() {
+  const settings = await getStoreSettings();
   return (
     <>
       <PageHero
@@ -25,7 +30,7 @@ export default function SellPage() {
       />
 
       <section className="wrap">
-        <SellEstimator />
+        <SellEstimator whatsapp={settings.whatsapp} />
       </section>
 
       <section id="how" className="wrap scroll-mt-24 pt-24">
@@ -50,7 +55,7 @@ export default function SellPage() {
             <p className="text-[14px] font-bold text-white/70">Gadgets & accessories</p>
             <h3 className="display mt-2 text-[28px]">Laptops, consoles, drones and more.</h3>
             <p className="mt-3 text-white/75">Send photos and the serial number. We reply with a graded quote, usually within the hour.</p>
-            <a href={whatsappLink("Hi JDHub, I'd like a quote to sell my gadget: ")} target="_blank" rel="noopener noreferrer" className="btn btn-white mt-6">
+            <a href={waLink(settings.whatsapp, "Hi JDHub, I'd like a quote to sell my gadget: ")} target="_blank" rel="noopener noreferrer" className="btn btn-white mt-6">
               Get a quote on WhatsApp
             </a>
           </div>
