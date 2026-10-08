@@ -28,8 +28,8 @@ export function CartDrawer() {
       <aside
         role="dialog"
         aria-label="Cart"
-        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] ${
+          isOpen ? "translate-x-0 shadow-2xl" : "translate-x-full shadow-none"
         }`}
       >
         <header className="flex h-16 items-center justify-between border-b border-line px-5">

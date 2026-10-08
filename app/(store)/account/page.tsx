@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
+import { getCurrentCustomer } from "@/lib/customer-auth";
+import { signOutAction } from "../signin/actions";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 
 export default function AccountPage() {
   return (
@@ -11,25 +15,41 @@ export default function AccountPage() {
         <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-stage">
           <Icon name="user" size={30} />
         </span>
-        <h1 className="display mt-6 text-[32px]">Sign in to JDHub</h1>
-        <p className="mt-2 text-ink-2">Track orders, manage swaps and get Trade-Up offers.</p>
-        <form className="mt-8 space-y-3 text-left">
-          <label className="block text-[14px] font-bold" htmlFor="phone">
-            Phone number
-          </label>
-          <input id="phone" type="tel" inputMode="tel" placeholder="0803 123 4567" className="field" />
-          <button type="button" className="btn btn-primary btn-lg w-full">
-            Send code
-          </button>
-        </form>
-        <p className="mt-4 text-[13px] text-muted">We&apos;ll text you a one-time code. No password needed.</p>
-        <p className="mt-8 text-[14px]">
-          Selling as a business?{" "}
-          <Link href="/vendors" className="font-bold underline underline-offset-4">
-            Become a vendor
-          </Link>
-        </p>
+        <Suspense fallback={<div className="mx-auto mt-6 h-24 w-64 animate-pulse rounded-xl bg-stage" />}>
+          <AccountBody />
+        </Suspense>
       </div>
     </section>
+  );
+}
+
+async function AccountBody() {
+  await connection();
+  const customer = await getCurrentCustomer();
+  if (!customer) {
+    return (
+      <>
+        <h1 className="display mt-6 text-[32px]">Your JDHub account</h1>
+        <p className="mt-2 text-ink-2">Sign in with a one-time code to check out faster and keep track of your orders.</p>
+        <Link href="/signin?next=/account" className="btn btn-primary btn-lg mt-8 w-full">
+          Sign in or create an account
+        </Link>
+      </>
+    );
+  }
+  return (
+    <>
+      <h1 className="display mt-6 text-[32px]">{customer.name ? `Hi, ${customer.name.split(" ")[0]}` : "Your account"}</h1>
+      <p className="mt-2 text-ink-2">Signed in as {customer.phone ?? customer.email}</p>
+      <div className="mt-8 grid gap-3">
+        <Link href="/shop" className="btn btn-primary btn-lg">
+          Continue shopping
+        </Link>
+        <form action={signOutAction}>
+          <button className="btn btn-outline btn-lg w-full">Sign out</button>
+        </form>
+      </div>
+      <p className="mt-6 text-[13px] text-muted">Order history and tracking are coming to this page shortly.</p>
+    </>
   );
 }

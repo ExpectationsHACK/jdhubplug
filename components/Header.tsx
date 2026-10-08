@@ -95,7 +95,7 @@ export function Header() {
               <Icon name="search" />
             </button>
             <CartButton />
-            <Link href="/account" aria-label="Account" className="hidden rounded-full p-2 hover:bg-stage sm:block">
+            <Link href="/account" aria-label="Your account" className="hidden rounded-full p-2 hover:bg-stage sm:block">
               <Icon name="user" />
             </Link>
             <button aria-label="Open menu" onClick={() => setDrawer(true)} className="rounded-full p-2 hover:bg-stage lg:hidden">
