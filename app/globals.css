@@ -1,26 +1,228 @@
 @import "tailwindcss";
 
+/*
+ * JDHub design tokens.
+ * Monochrome-first: black type and CTAs on white, light-grey product stages,
+ * one confident blue for links, focus and active states.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #000000;
+  --ink-2: #313131;
+  --muted: #757575;
+  --line: #dddddd;
+  --stage: #f4f4f4;
+  --canvas: #ffffff;
+  --footer: #f7f7f7;
+  --accent: #1a5cff;
+  --accent-deep: #0b2a8a;
+  --sale: #e5004b;
+  --ok: #0a8a4a;
+  --wa: #25d366;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-stage: var(--stage);
+  --color-canvas: var(--canvas);
+  --color-footer: var(--footer);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-sale: var(--sale);
+  --color-ok: var(--ok);
+  --color-wa: var(--wa);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --radius-tile: 20px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Headlines: heavy, tight, geometric. Body copy stays light and airy. */
+.display {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+@media (min-width: 768px) {
+  .wrap {
+    padding-inline: 24px;
+  }
+}
+@media (min-width: 1280px) {
+  .wrap {
+    padding-inline: 48px;
+  }
+}
+
+/* Pill buttons: the only button shape in the system. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn-primary {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #555;
+}
+.btn-outline {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: transparent;
+}
+.btn-outline:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.btn-white {
+  background: #fff;
+  color: var(--ink);
+}
+.btn-white:hover {
+  background: #e6e6e6;
+}
+.btn-ghost-white {
+  border-color: #fff;
+  color: #fff;
+}
+.btn-ghost-white:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.btn-lg {
+  min-height: 48px;
+  padding: 14px 32px;
+  font-size: 16px;
+}
+.btn:disabled {
+  background: #e6e6e6;
+  color: #9a9a9a;
+  border-color: transparent;
+  cursor: not-allowed;
+}
+
+/* Underlined text link with chevron, used for "Learn more" style links. */
+.link-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Text tabs with a heavy underline on the active one. */
+.tab {
+  position: relative;
+  padding: 8px 2px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tab[aria-selected="true"] {
+  color: var(--ink);
+}
+.tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--ink);
+}
+
+/* Selectable option chips (storage, colour, grade). */
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.chip:hover {
+  border-color: #999;
+}
+.chip[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+  padding: 11px 15px;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #fff;
+}
+.field:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fade-in 0.5s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
+  }
 }
