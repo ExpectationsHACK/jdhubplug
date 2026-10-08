@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { formatNaira, grades, whatsappLink, type Listing } from "@/lib/catalog";
+import { formatNaira, grades, type Listing } from "@/lib/catalog";
+import { AddToCartButton } from "./cart/AddToCartButton";
 import { GradePill } from "./ProductCard";
 import { Icon } from "./Icon";
 
+// Listings are individual graded units, so there are no selectable variants.
+const NO_OPTIONS: { label: string; values: string[] }[] = [];
+
 export function BuyBox({ item }: { item: Listing }) {
   const [opts, setOpts] = useState<Record<string, string>>(
-    Object.fromEntries((item.options ?? []).map((o) => [o.label, o.values[0]])),
+    Object.fromEntries(NO_OPTIONS.map((o) => [o.label, o.values[0]])),
   );
   const [protect, setProtect] = useState(false);
   const isCar = item.category === "cars";
   // Higher storage/memory tiers add a step to the price; colour never does.
   const priced = (label: string) => !isCar && (label === "Storage" || label === "Memory");
-  const step = (item.options ?? []).reduce((sum, o) => sum + (priced(o.label) ? o.values.indexOf(opts[o.label]) * 65000 : 0), 0);
+  const step = NO_OPTIONS.reduce((sum, o) => sum + (priced(o.label) ? o.values.indexOf(opts[o.label]) * 65000 : 0), 0);
   const protection = isCar ? 0 : Math.round((item.price * 0.06) / 500) * 500;
   const total = item.price + step + (protect ? protection : 0);
   const grade = grades.find((g) => g.id === item.grade)!;
@@ -35,7 +39,7 @@ export function BuyBox({ item }: { item: Listing }) {
         <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{isCar ? grade.carDetail : grade.detail}</p>
       </div>
 
-      {(item.options ?? []).map((o) => (
+      {NO_OPTIONS.map((o) => (
         <fieldset key={o.label} className="mt-8">
           <legend className="mb-3 text-[16px] font-bold">{o.label}</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -100,14 +104,7 @@ export function BuyBox({ item }: { item: Listing }) {
           <a href="/swap" className="btn btn-outline btn-lg">
             <Icon name="swap" size={18} /> Swap for this
           </a>
-          <a
-            href={whatsappLink(`Hi JDHub, I'd like to buy: ${summary} (${formatNaira(total)}) with escrow protection.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary btn-lg"
-          >
-            Buy now
-          </a>
+          <AddToCartButton product={item} className="btn btn-primary btn-lg" openCart />
         </div>
         <ul className="mt-5 space-y-2 text-[13px] text-ink-2">
           <li className="flex items-center gap-2">
@@ -128,14 +125,7 @@ export function BuyBox({ item }: { item: Listing }) {
           <p className="text-[12px] text-muted">Total</p>
           <p className="text-[18px] font-bold">{formatNaira(total)}</p>
         </div>
-        <a
-          href={whatsappLink(`Hi JDHub, I'd like to buy: ${summary} (${formatNaira(total)}) with escrow protection.`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary"
-        >
-          Buy now
-        </a>
+        <AddToCartButton product={item} className="btn btn-primary" openCart />
       </div>
     </div>
   );

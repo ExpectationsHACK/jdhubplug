@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatNaira, gradeName, type Listing } from "@/lib/catalog";
+import { AddToCartButton } from "./cart/AddToCartButton";
 import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 
@@ -13,7 +14,7 @@ export function GradePill({ grade }: { grade: Listing["grade"] }) {
 
 export function ProductCard({ item }: { item: Listing }) {
   return (
-    <div className="group flex h-full flex-col rounded-tile bg-stage p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+    <div data-product-card className="group flex h-full flex-col rounded-tile bg-stage p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
       <div className="flex min-h-6 items-start justify-between">
         {item.badge ? (
           <span
@@ -58,9 +59,7 @@ export function ProductCard({ item }: { item: Listing }) {
           {formatNaira(item.price)}
           {item.was && <span className="ml-2 text-[13px] font-normal text-muted line-through">{formatNaira(item.was)}</span>}
         </p>
-        <Link href={`/product/${item.id}`} className="btn btn-primary mt-4 w-full">
-          Buy now
-        </Link>
+        <AddToCartButton product={item} className="btn btn-primary mt-4 w-full" />
       </div>
     </div>
   );

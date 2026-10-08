@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { categories, featuredIn, listings, formatNaira } from "@/lib/catalog";
 import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
+import { CartButton } from "./cart/CartButton";
 import { Logo } from "./Logo";
 
 const utilityNav = [
@@ -93,13 +94,8 @@ export function Header() {
             <button aria-label="Search" onClick={() => setSearch(true)} className="rounded-full p-2 hover:bg-stage">
               <Icon name="search" />
             </button>
-            <Link href="/shop" aria-label="Cart" className="relative rounded-full p-2 hover:bg-stage">
-              <Icon name="cart" />
-              <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
-                0
-              </span>
-            </Link>
-            <Link href="/account" aria-label="Account" className="hidden rounded-full p-2 hover:bg-stage sm:block">
+            <CartButton />
+            <Link href="/account" aria-label="Your account" className="hidden rounded-full p-2 hover:bg-stage sm:block">
               <Icon name="user" />
             </Link>
             <button aria-label="Open menu" onClick={() => setDrawer(true)} className="rounded-full p-2 hover:bg-stage lg:hidden">

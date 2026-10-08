@@ -39,6 +39,21 @@ Radius: tiles `20px`, chips/fields `12px`, buttons `9999px` (pill).
 - Scale: hero 52/34px · section 40/28px · card title 16px · body 14–16px · meta 12–13px.
 - **Wordmark:** "JDHUB" in Montserrat ExtraBold, uppercase, `0.14em` tracking (`components/Logo.tsx`).
 
+## Logo
+
+The mark is a **JD ligature on a rounded black tile** (`components/brand/JDMark.tsx`, `public/brand/`).
+The J's top serif, stem and hook share one continuous stroke with the D's bowl, and a
+**blue hub dot** (`#1a5cff`) sits inside the D: the point where buyers, sellers and swappers meet.
+
+- Built on a 64×64 grid with a 7-unit stroke, so it stays legible from a 16px favicon up.
+- Header lockup: mark (32px) + 10px gap + JDHUB wordmark.
+- Variants: `dark` (black tile, white glyph; default), `light` (white tile, black glyph, for
+  dark backgrounds) and `bare` (glyph only, inherits text colour).
+- Clear space: at least the tile's corner radius on every side. Don't recolour the hub dot,
+  stretch the tile, or set the glyph without the stem.
+- Files: `jd-mark.svg`, `jd-mark-light.svg`, `favicon.ico` (16/32/48), `apple-icon.png`
+  (180, full-bleed), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`.
+
 ## Iconography (`components/Icon.tsx`)
 
 Thin outline icons on a 24px grid with a **1.5px stroke** and round caps and joins. They have no fills and are

@@ -226,3 +226,44 @@ body {
     animation: none;
   }
 }
+
+/* Cart feedback: the icon jolts and the badge pops when a product lands. */
+@keyframes cart-bump {
+  0% { transform: scale(1) rotate(0); }
+  30% { transform: scale(1.35) rotate(-12deg); }
+  60% { transform: scale(0.9) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes cart-pop {
+  0% { transform: scale(0.2); }
+  60% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.cart-bump { animation: cart-bump 0.55s cubic-bezier(.3,1.6,.5,1); }
+.cart-pop { animation: cart-pop 0.45s cubic-bezier(.3,1.6,.5,1); }
+@media (prefers-reduced-motion: reduce) {
+  .cart-bump, .cart-pop { animation: none; }
+}
+
+/* Admin tables */
+.adm-table thead th {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.adm-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.adm-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.adm-table tbody tr:hover td {
+  background: #fafbfc;
+}
