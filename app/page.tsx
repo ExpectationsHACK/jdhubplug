@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { DeviceArt } from "@/components/DeviceArt";
+import { ProductImage } from "@/components/ProductImage";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { Icon, type IconName } from "@/components/Icon";
 import { ShowcaseTabs } from "@/components/ShowcaseTabs";
-import { categories, grades } from "@/lib/catalog";
+import { categories, featuredIn, getListing, grades, listings } from "@/lib/catalog";
 
 const quickLinks: { label: string; href: string; icon: IconName }[] = [
   { label: "Phones", href: "/shop/phones", icon: "smartphone" },
@@ -49,6 +49,9 @@ export default function Home() {
       {/* Explore: large editorial tiles */}
       <section className="wrap pt-24">
         <h2 className="display text-center text-[28px] md:text-[40px]">Explore JDHub</h2>
+        <p className="mt-3 text-center text-[16px] text-ink-2">
+          {listings.length} graded listings across phones, accessories, gadgets and cars.
+        </p>
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           <ExploreTile
             href="/sell"
@@ -57,7 +60,7 @@ export default function Home() {
             cta="Get an instant offer"
             bg="linear-gradient(135deg,#0b2a8a,#1a5cff)"
             dark
-            art={<DeviceArt kind="phone" tint="#2e4a6b" className="h-56 w-56 md:h-72 md:w-72" />}
+            art={<TilePhoto id="iphone-13-1" />}
             large
           />
           <ExploreTile
@@ -67,7 +70,7 @@ export default function Home() {
             cta="Shop cars"
             bg="#111"
             dark
-            art={<DeviceArt kind="car" tint="#7a1f24" className="h-48 w-full max-w-md md:h-64" />}
+            art={<TilePhoto id="toyota-camry-2019-xse-1" wide />}
             large
           />
           <ExploreTile
@@ -76,7 +79,7 @@ export default function Home() {
             title="Laptops, consoles and drones, graded like phones."
             cta="Shop gadgets"
             bg="#f4f4f4"
-            art={<DeviceArt kind="laptop" tint="#b9bcc1" className="h-44 w-44 md:h-56 md:w-56" />}
+            art={<TilePhoto id="macbook-air-m2-1" />}
           />
           <ExploreTile
             href="/vendors"
@@ -138,7 +141,14 @@ export default function Home() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categories.map((c) => (
             <Link key={c.slug} href={`/shop/${c.slug}`} className="group rounded-tile bg-stage p-6 text-center">
-              <DeviceArt kind={c.art} className="mx-auto h-36 w-36 transition-transform duration-300 group-hover:scale-105" />
+              <div className="overflow-hidden rounded-xl bg-white">
+                <ProductImage
+                  item={featuredIn(c.slug, 1)[0]}
+                  width={480}
+                  className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-105"
+                  artClassName="h-36 w-36"
+                />
+              </div>
               <h3 className="display mt-4 text-[22px]">{c.name}</h3>
               <p className="mt-1 text-[14px] text-ink-2">{c.tagline}</p>
               <span className="link-cta mt-4">
@@ -168,6 +178,15 @@ export default function Home() {
         </div>
       </section>
     </>
+  );
+}
+
+function TilePhoto({ id, wide }: { id: string; wide?: boolean }) {
+  const item = getListing(id)!;
+  return (
+    <div className={`overflow-hidden rounded-xl shadow-[0_12px_32px_rgba(0,0,0,0.25)] ${wide ? "w-full max-w-md" : "w-56 md:w-72"}`}>
+      <ProductImage item={item} width={720} className={`w-full ${wide ? "aspect-[16/10]" : "aspect-square"}`} artClassName="h-40 w-40" />
+    </div>
   );
 }
 

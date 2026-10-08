@@ -22,13 +22,13 @@ const slides: Slide[] = [
   {
     eyebrow: "iPhone 15 Pro Max",
     title: "Graded Like New.\nPriced like it should be.",
-    body: "IMEI-checked, battery-tested and escrow-protected. Save up to ₦75,000.",
-    primary: { label: "Buy now", href: "/product/iphone-15-pro-max-256" },
+    body: "IMEI-checked, battery-tested and escrow-protected. Graded units from every storage tier.",
+    primary: { label: "Buy now", href: "/product/iphone-15-pro-max-1" },
     secondary: { label: "Learn more", href: "/trust#grading" },
     bg: "radial-gradient(120% 90% at 75% 50%, #2a2f3a 0%, #0b0d12 60%, #000 100%)",
     dark: true,
     art: [{ kind: "phone", tint: "#8a8378" }],
-    legal: "*Saving compared with previous JDHub price. While stocks last.",
+    legal: "*Price depends on grade and storage. Every unit escrow-protected.",
   },
   {
     eyebrow: "Sell",
@@ -46,7 +46,7 @@ const slides: Slide[] = [
   {
     eyebrow: "Swap",
     title: "Trade up.\nPay only the difference.",
-    body: "Your iPhone 13 + ₦265,000 gets you an iPhone 14 graded Great. Swap phones, gadgets, even cars.",
+    body: "Trade in your iPhone 13 and pay only the difference on an iPhone 14. Swap phones, gadgets, even cars.",
     primary: { label: "Start a swap", href: "/swap" },
     secondary: { label: "See swap picks", href: "/shop/phones" },
     bg: "linear-gradient(180deg, #f4f4f4 0%, #e9ebee 100%)",

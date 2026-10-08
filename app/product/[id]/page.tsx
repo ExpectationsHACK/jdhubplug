@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BuyBox } from "@/components/BuyBox";
-import { DeviceArt } from "@/components/DeviceArt";
 import { Icon } from "@/components/Icon";
 import { Breadcrumbs } from "@/components/PageHero";
 import { ProductCard } from "@/components/ProductCard";
-import { getCategory, getListing, listings } from "@/lib/catalog";
+import { ProductImage } from "@/components/ProductImage";
+import { getCategory, getListing, listings, photoPage } from "@/lib/catalog";
 
 export function generateStaticParams() {
   return listings.map((l) => ({ id: l.id }));
@@ -21,7 +21,12 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
   const item = getListing((await params).id);
   if (!item) notFound();
   const cat = getCategory(item.category)!;
-  const related = listings.filter((l) => l.category === item.category && l.id !== item.id).slice(0, 4);
+  const sameModel = listings.filter((l) => l.model === item.model && l.id !== item.id);
+  const related = listings
+    .filter((l) => l.category === item.category && l.model !== item.model)
+    .filter((l, i, all) => all.findIndex((x) => x.model === l.model) === i)
+    .sort((a, b) => Math.abs(a.price - item.price) - Math.abs(b.price - item.price))
+    .slice(0, 4);
 
   return (
     <>
@@ -31,20 +36,18 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
 
       <section className="wrap grid gap-10 pt-8 md:grid-cols-[1.2fr_1fr] lg:gap-16">
         <div className="md:sticky md:top-24 md:self-start">
-          <div className="grid aspect-square place-items-center rounded-tile bg-stage">
-            <DeviceArt kind={item.art} tint={item.tint} className="h-4/5 w-4/5" />
+          <div className="overflow-hidden rounded-tile bg-stage">
+            <ProductImage item={item} width={1200} priority className="aspect-square w-full" artClassName="h-4/5 w-4/5" />
           </div>
-          <div className="mt-3 grid grid-cols-4 gap-3">
-            {["Front", "Back", "Side", "Box"].map((v, k) => (
-              <div
-                key={v}
-                className={`grid aspect-square place-items-center rounded-xl bg-stage ${k === 0 ? "ring-2 ring-accent" : ""}`}
-                aria-label={`${v} view`}
-              >
-                <DeviceArt kind={item.art} tint={item.tint} className="h-3/4 w-3/4" />
-              </div>
-            ))}
-          </div>
+          {item.photo && (
+            <p className="mt-3 text-[12px] text-muted">
+              Representative photo of this model.{" "}
+              <a href={photoPage(item.photo)} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">
+                Photo credit & licence (Wikimedia Commons)
+              </a>
+              . Seller photos of this exact unit are shared on request before you pay.
+            </p>
+          )}
         </div>
         <BuyBox item={item} />
       </section>
@@ -76,6 +79,18 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
           ))}
         </div>
       </section>
+
+      {sameModel.length > 0 && (
+        <section className="wrap pt-20">
+          <h2 className="display text-[24px] md:text-[32px]">More {item.name} units</h2>
+          <p className="mt-2 text-[15px] text-ink-2">Same model, different grade, storage or seller.</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {sameModel.map((l) => (
+              <ProductCard key={l.id} item={l} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="wrap pt-20">
