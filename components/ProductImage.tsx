@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { photoUrl, type Listing } from "@/lib/catalog";
+import { productImageSrc } from "@/lib/photos";
+import type { Product } from "@/lib/types";
 import { DeviceArt } from "./DeviceArt";
 
 /**
- * Product photo from Wikimedia Commons. Falls back to the vector illustration
+ * Product photo (uploaded URL or Wikimedia Commons). Falls back to the vector illustration
  * if the photo is missing or fails to load, so a card is never blank.
  */
 export function ProductImage({
@@ -15,7 +16,7 @@ export function ProductImage({
   artClassName = "h-3/4 w-3/4",
   priority = false,
 }: {
-  item: Pick<Listing, "photo" | "art" | "tint" | "name">;
+  item: Pick<Product, "photo" | "imageUrl" | "art" | "tint" | "name">;
   width?: number;
   className?: string;
   artClassName?: string;
@@ -30,7 +31,9 @@ export function ProductImage({
     if (img && img.complete && img.naturalWidth === 0) setFailed(true);
   }, []);
 
-  if (!item.photo || failed) {
+  const src = productImageSrc(item, width);
+
+  if (!src || failed) {
     return (
       <div className={`grid place-items-center ${className}`}>
         <DeviceArt kind={item.art} tint={item.tint} className={artClassName} />
@@ -44,7 +47,7 @@ export function ProductImage({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={ref}
-      src={photoUrl(item.photo, width)}
+      src={src}
       alt={item.name}
       loading={priority ? "eager" : "lazy"}
       decoding="async"

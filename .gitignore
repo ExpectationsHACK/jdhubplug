@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local store snapshot (development)
+/.data
+
+# env example is documentation, keep it
+!.env.example

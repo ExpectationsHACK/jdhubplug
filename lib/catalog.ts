@@ -1,62 +1,13 @@
 import { models } from "./models";
+import { photoPage as commonsPage, photoUrl as commonsUrl } from "./photos";
 
-// JDHub catalog data. One shared listing shape with a flexible, category-specific
-// `attrs` object (a car needs VIN/mileage/year; a phone needs storage/battery health).
+// JDHub reference data: categories, grades, states, trade-in pricing, and the seed
+// generator that turns `models.ts` into the initial product catalog. The live catalog
+// lives in the store (see lib/store) and is edited from /admin.
 
-export type CategorySlug = "phones" | "accessories" | "gadgets" | "cars";
+import type { Category, CategorySlug, Grade, Product } from "./types";
 
-export type Grade = "like-new" | "great" | "good" | "fair";
-
-export type ArtKind =
-  | "phone"
-  | "earbuds"
-  | "charger"
-  | "case"
-  | "powerbank"
-  | "laptop"
-  | "tablet"
-  | "watch"
-  | "drone"
-  | "console"
-  | "camera"
-  | "car";
-
-export type Category = {
-  slug: CategorySlug;
-  name: string;
-  tagline: string;
-  blurb: string;
-  art: ArtKind;
-  brands: string[];
-};
-
-export type Listing = {
-  id: string;
-  /** Model slug this listing was generated from. */
-  model: string;
-  category: CategorySlug;
-  brand: string;
-  name: string;
-  /** Short spec line shown under the name on cards. */
-  spec: string;
-  price: number;
-  /** Price before discount, when the item is on offer. */
-  was?: number;
-  grade: Grade;
-  state: string;
-  seller: string;
-  verified: boolean;
-  rating: number;
-  reviews: number;
-  art: ArtKind;
-  /** Hex colour used to tint the fallback illustration. */
-  tint: string;
-  /** Wikimedia Commons file name for the product photo. */
-  photo?: string;
-  badge?: "New" | "Best seller" | "Hot deal" | "Swap pick";
-  attrs: Record<string, string>;
-  options?: { label: string; values: string[] }[];
-};
+export type { ArtKind, Category, CategorySlug, Grade, Listing, Product } from "./types";
 
 export const categories: Category[] = [
   {
@@ -158,8 +109,18 @@ function rng(seed: string) {
 
 const round = (n: number, to: number) => Math.round(n / to) * to;
 
-function buildListings(): Listing[] {
-  const out: Listing[] = [];
+const SEED_TIME = Date.UTC(2026, 9, 1, 9, 0, 0);
+
+/** Units in stock for a freshly seeded listing: used phones and cars are one-offs. */
+function seedStock(category: CategorySlug, r: () => number) {
+  if (category === "accessories") return 3 + Math.floor(r() * 6);
+  if (category === "gadgets") return 1 + Math.floor(r() * 3);
+  return 1;
+}
+
+export function buildSeedProducts(): Product[] {
+  const out: Product[] = [];
+  let n = 0;
   for (const m of models) {
     const r = rng(m.slug);
     const pick = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
@@ -228,19 +189,27 @@ function buildListings(): Listing[] {
         photo: m.photo,
         badge: onOffer ? "Hot deal" : i === 0 && r() < 0.35 ? "Best seller" : r() < 0.08 ? "New" : m.category === "phones" && r() < 0.1 ? "Swap pick" : undefined,
         attrs,
+        stock: seedStock(m.category, r),
+        sold: 0,
+        status: "active",
+        featured: i === 0 && r() < 0.25,
+        createdAt: new Date(SEED_TIME - n * 60_000).toISOString(),
+        updatedAt: new Date(SEED_TIME - n * 60_000).toISOString(),
       });
+      n++;
     }
   }
   return out;
 }
 
-export const listings: Listing[] = buildListings();
+/**
+ * The seed catalog. Storefront code should read the live catalog from the store
+ * (lib/data.ts); this export exists for the seed and for static reference only.
+ */
+export const listings: Product[] = buildSeedProducts();
 
-/** Thumbnail served by Wikimedia Commons at the requested width. */
-export const photoUrl = (file: string, width = 800) =>
-  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`;
-/** Commons file page, which carries the author and licence. */
-export const photoPage = (file: string) => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file)}`;
+export const photoUrl = commonsUrl;
+export const photoPage = commonsPage;
 
 export const getCategory = (slug: string) => categories.find((c) => c.slug === slug);
 export const getListing = (id: string) => listings.find((l) => l.id === id);

@@ -9,7 +9,7 @@
 // Photos are freely licensed images on Wikimedia Commons, credited on each
 // product page and on /credits.
 
-import type { ArtKind, CategorySlug } from "./catalog";
+import type { ArtKind, CategorySlug } from "./types";
 
 export type Model = {
   slug: string;
