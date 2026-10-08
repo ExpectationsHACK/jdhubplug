@@ -71,6 +71,40 @@ proxy.ts                     redirects signed-out visitors away from /admin
 - The owner signs in with `ADMIN_PASSWORD`; staff accounts are created in /admin/staff.
   In development without `ADMIN_PASSWORD` the password is `jdhub-admin`.
 
+## Authentication
+
+Two separate systems with separate cookies and signing keys (a token from one can
+never be used in the other):
+
+**Admin** (`lib/auth.ts`, cookie `jd_admin`, 12 h)
+- Owner signs in with `ADMIN_PASSWORD` (optionally `ADMIN_EMAIL` + password). Staff
+  accounts (manager / support) are created in /admin/staff with PBKDF2-hashed passwords.
+- `proxy.ts` blocks signed-out visitors before admin routes render; every admin page,
+  Server Action and route handler re-checks with `requireAdmin(perm)` / `getSession()`.
+- Revocation: tokens carry a credential fingerprint (changing a password or deactivating
+  a staff account ends their sessions) and a global epoch (`revokeAllSessions`).
+- Login is rate-limited per IP (8 failures / 15 min) and audited.
+
+**Customers** (`lib/customer-auth.ts`, cookie `jd_customer`, 30 days)
+- Passwordless: phone (SMS via Termii) or email (Resend) one-time code, `/signin`.
+- Codes are 6 digits, stored hashed, expire in 10 minutes, 5 attempts, 30 s resend
+  cooldown, rate-limited per identifier (5 / 15 min) and per IP (20 / hour). Responses
+  don't reveal whether an account exists. In development without a provider, the code
+  is shown on screen.
+- `getCurrentCustomer()` / `requireCustomer(next)`; blocked customers count as signed out.
+- Checkout requires sign-in when `settings.requireAccountForCheckout` is on and a code
+  channel is configured; orders store `customerId`.
+
+## Monitoring
+
+- **Sentry** (`instrumentation.ts`, `instrumentation-client.ts`, `sentry.*.config.ts`):
+  errors from server, edge and browser, tunnelled through `/monitoring`. Personal data
+  (phones, emails, cookies, request bodies, order tokens) is scrubbed (`lib/sentry-scrub.ts`).
+- **PostHog** (`lib/analytics.ts` client, `lib/analytics-server.ts` server): proxied via
+  `/ingest`. Funnel events: `product_viewed → product_added_to_cart → checkout_started →
+  order_placed → order_paid` (order events are sent from the server). Admin pages are
+  never tracked. Both are inactive until their keys are set.
+
 ## Cart and checkout
 
 - `components/cart/CartProvider.tsx` keeps the cart in localStorage. `useCart()` gives

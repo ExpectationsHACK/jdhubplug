@@ -112,6 +112,8 @@ export type OrderEvent = {
 
 export type Order = {
   id: string; // e.g. JDH-10234
+  /** Signed-in customer who placed the order. */
+  customerId?: string;
   /** Secret used in customer-facing links so order pages can't be enumerated. */
   token: string;
   createdAt: string;
@@ -184,6 +186,27 @@ export type OfferStats = { views: number; orders: number; revenue: number };
 
 export type OfferState = "scheduled" | "live" | "expired" | "paused" | "exhausted";
 
+// ----------------------------------------------------------------- Customers
+
+/** A shopper account. Passwordless: customers sign in with a one-time code. */
+export type Customer = {
+  id: string;
+  /** E.164 phone, e.g. +2348031234567. */
+  phone?: string;
+  email?: string;
+  name?: string;
+  /** Default delivery details, saved from the last order. */
+  address?: string;
+  city?: string;
+  state?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+  /** Set when an admin blocks the account; blocked customers can't sign in or check out. */
+  blocked?: boolean;
+};
+
+export type OtpChannel = "sms" | "email";
+
 // ------------------------------------------------------------- Leads, staff
 
 export type LeadType = "sell" | "swap" | "contact" | "vendor";
@@ -247,6 +270,8 @@ export type Settings = {
   hideSoldOut: boolean;
   /** Product ids featured in the home hero showcase (falls back to auto-pick). */
   heroProductIds: string[];
+  /** Require shoppers to sign in (one-time code) before checkout. */
+  requireAccountForCheckout: boolean;
 };
 
 export type StorageKind = "redis" | "file" | "memory";

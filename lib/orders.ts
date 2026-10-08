@@ -1,5 +1,6 @@
 import "server-only";
 
+import { captureServer } from "./analytics-server";
 import { priceCart, type CartLineInput, type PricedCart } from "./pricing";
 import {
   bumpOfferStat,
@@ -49,6 +50,10 @@ const RESTOCK_ON: OrderStatus[] = ["cancelled", "refunded"];
 
 export type PlaceOrderInput = {
   items: CartLineInput[];
+  /** Signed-in customer placing the order (from getCustomer(), never from the client). */
+  customerId?: string;
+  /** PostHog distinct id from the browser, so server-side order events join the visitor's journey. */
+  analyticsId?: string;
   offerCode?: string;
   customer: Order["customer"];
   delivery: DeliveryMethod;
@@ -112,6 +117,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const createdAt = new Date(nowMs).toISOString();
   const order: Order = {
     id: await nextOrderId(),
+    customerId: input.customerId,
     token: crypto.randomUUID().replace(/-/g, ""),
     createdAt,
     updatedAt: createdAt,
@@ -151,6 +157,22 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   if (order.offerCode) {
     await Promise.all([bumpOfferStat(order.offerCode, "orders", 1), bumpOfferStat(order.offerCode, "revenue", order.total)]).catch(() => undefined);
   }
+
+  captureServer("order_placed", input.analyticsId || input.customerId || order.id, {
+    order_id: order.id,
+    revenue: order.total,
+    subtotal: order.subtotal,
+    discount: order.discount,
+    delivery_fee: order.deliveryFee,
+    currency: "NGN",
+    items: order.lines.reduce((n, l) => n + l.qty, 0),
+    product_ids: order.lines.map((l) => l.productId),
+    offer_code: order.offerCode,
+    payment_method: order.payment.method,
+    delivery: order.delivery,
+    state: order.customer.state,
+    signed_in: !!order.customerId,
+  });
 
   return { ok: true, order };
 }
@@ -201,11 +223,15 @@ async function transitionLocked(
       await Promise.all([bumpOfferStat(order.offerCode, "orders", -1), bumpOfferStat(order.offerCode, "revenue", -order.total)]).catch(() => undefined);
     }
     await logAudit({ by, action: `order.${next}`, target: order.id, detail: "Stock restored" }).catch(() => undefined);
+    captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.customerId || order.id, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
     return updated;
   }
 
   const saved = await saveOrder(updated);
   await logAudit({ by, action: `order.${next}`, target: order.id, detail: opts.note }).catch(() => undefined);
+  if (next === "paid" || next === "completed") {
+    captureServer(next === "paid" ? "order_paid" : "order_completed", order.customerId || order.id, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
+  }
   return saved;
 }
 

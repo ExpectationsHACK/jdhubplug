@@ -2,8 +2,18 @@ import "server-only";
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SESSION_COOKIE, SESSION_TTL_SECONDS, signSession, verifySession, type Session } from "./session";
-import { clearLoginFailures, findStaffByEmail, loginFailures, logAudit, recordLoginFailure, saveStaff } from "./store";
+import { fingerprint, SESSION_COOKIE, SESSION_TTL_SECONDS, signSession, verifySession, type Session } from "./session";
+import {
+  bumpSessionEpoch,
+  clearLoginFailures,
+  findStaffByEmail,
+  getSessionEpoch,
+  listStaff,
+  loginFailures,
+  logAudit,
+  recordLoginFailure,
+  saveStaff,
+} from "./store";
 import type { Role, StaffUser } from "./types";
 
 // Admin authentication and permissions.
@@ -71,8 +81,29 @@ function safeEqual(a: string, b: string) {
 
 // ------------------------------------------------------------------ Sessions
 
+/**
+ * The signed-in admin, or null. Beyond the signature this checks revocation:
+ * the session epoch (bumped by "sign out everyone"), and the credential
+ * fingerprint, so a password change or deactivated staff account ends old sessions.
+ */
 export async function getSession(): Promise<Session | null> {
-  return verifySession((await cookies()).get(SESSION_COOKIE)?.value);
+  const s = await verifySession((await cookies()).get(SESSION_COOKIE)?.value);
+  if (!s) return null;
+  if ((s.ep ?? 0) < (await getSessionEpoch())) return null;
+  if (s.role === "owner" && s.sub === "owner") {
+    const pw = ownerPassword();
+    if (!pw || s.fp !== (await fingerprint(pw))) return null;
+    return s;
+  }
+  const user = (await listStaff()).find((u) => u.id === s.sub);
+  if (!user || !user.active || user.role !== s.role || s.fp !== (await fingerprint(user.passwordHash))) return null;
+  return s;
+}
+
+/** Sign out every admin and customer session everywhere. */
+export async function revokeAllSessions(by: Session) {
+  await bumpSessionEpoch();
+  await audit(by, "auth.revoke_all", undefined, "All sessions signed out");
 }
 
 /**
@@ -101,18 +132,18 @@ export async function login(email: string, password: string): Promise<LoginResul
   const owner = ownerPassword();
   if (!owner) return { ok: false, error: "The admin isn't set up yet. Add ADMIN_PASSWORD in your Vercel environment variables." };
 
-  let session: Omit<Session, "exp"> | null = null;
+  let session: Omit<Session, "exp" | "ep"> | null = null;
   const e = email.trim().toLowerCase();
 
   if (!e || e === (process.env.ADMIN_EMAIL ?? "").toLowerCase() || e === "owner") {
-    if (safeEqual(password, owner)) session = { sub: "owner", name: "Owner", role: "owner" };
+    if (safeEqual(password, owner)) session = { sub: "owner", name: "Owner", role: "owner", fp: await fingerprint(owner) };
   }
   if (!session && e) {
     const user = await findStaffByEmail(e);
     if (user?.active) {
       const { hash } = await hashPassword(password, user.salt);
       if (safeEqual(hash, user.passwordHash)) {
-        session = { sub: user.id, name: user.name, role: user.role };
+        session = { sub: user.id, name: user.name, role: user.role, fp: await fingerprint(user.passwordHash) };
         await saveStaff({ ...user, lastLoginAt: new Date().toISOString() } satisfies StaffUser);
       }
     }
@@ -124,7 +155,7 @@ export async function login(email: string, password: string): Promise<LoginResul
   }
 
   await clearLoginFailures(ip);
-  const token = await signSession(session);
+  const token = await signSession({ ...session, ep: await getSessionEpoch() });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

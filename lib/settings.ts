@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   bank: { bankName: "", accountName: "", accountNumber: "" },
   hideSoldOut: false,
   heroProductIds: [],
+  requireAccountForCheckout: true,
 };
 
 /** Merge stored settings over the defaults so new fields always have a value. */

@@ -2,7 +2,7 @@
 // Run: npm run test:orders
 process.env.JDHUB_MEMORY_ONLY = "1";
 import { placeOrder, transitionOrder, sweepExpiredOrders } from "../lib/orders";
-import { setStock, getProduct, saveOffer, getOfferStats, getSettings, saveSettings, getOrder, saveOrder } from "../lib/store";
+import { setStock, getProduct, saveOffer, getOfferStats, getSettings, saveSettings, getOrder } from "../lib/store";
 
 const cust = { name: "Ada", phone: "08031234567", state: "Lagos", address: "1 Allen Ave" };
 const assert = (c: unknown, m: string) => { if (!c) { console.error("FAIL", m); process.exitCode = 1; } else console.log("ok  ", m); };

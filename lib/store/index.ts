@@ -2,7 +2,7 @@ import "server-only";
 
 import { buildSeedProducts } from "../catalog";
 import { withDefaults } from "../settings";
-import type { AuditEntry, Lead, Offer, OfferStats, Order, Product, Settings, StaffUser } from "../types";
+import type { AuditEntry, Customer, Lead, Offer, OfferStats, Order, Product, Settings, StaffUser } from "../types";
 import { getDriver, storageStatus } from "./driver";
 
 export { storageStatus };
@@ -18,6 +18,10 @@ export { storageStatus };
 //   jd:staff      hash  id -> StaffUser JSON
 //   jd:settings   string Settings JSON
 //   jd:audit      list  AuditEntry JSON, newest first, capped at 1000
+//   jd:customers  hash  id -> Customer JSON
+//   jd:customer:by hash "phone:+234..." | "email:..." -> customer id
+//   jd:otp:{key}  string one-time code record (hashed code, expiry, attempts)
+//   jd:rl:{key}   string rate-limit window record
 //   jd:meta       hash  seeded -> seed version
 //   jd:seq:order  counter for order numbers
 
@@ -36,6 +40,11 @@ const K = {
   orderSeq: "jd:seq:order",
   seedLock: "jd:seed-lock",
   loginFail: (who: string) => `jd:loginfail:${who}`,
+  customers: "jd:customers",
+  customerIndex: "jd:customer:by",
+  otp: (key: string) => `jd:otp:${key}`,
+  rateLimit: (key: string) => `jd:rl:${key}`,
+  sessionEpoch: "jd:session-epoch",
 };
 
 const SEED_VERSION = "1";
@@ -361,6 +370,88 @@ export async function saveStaff(u: StaffUser) {
 
 export async function deleteStaff(id: string) {
   await getDriver().hdel(K.staff, [id]);
+}
+
+// ----------------------------------------------------------------- Customers
+
+export async function getCustomer(id: string): Promise<Customer | null> {
+  return parse<Customer>(await getDriver().hget(K.customers, id));
+}
+
+export async function findCustomer(by: { phone?: string; email?: string }): Promise<Customer | null> {
+  const d = getDriver();
+  const key = by.phone ? `phone:${by.phone}` : by.email ? `email:${by.email.toLowerCase()}` : null;
+  if (!key) return null;
+  const id = await d.hget(K.customerIndex, key);
+  return id ? getCustomer(id) : null;
+}
+
+export async function saveCustomer(c: Customer) {
+  const d = getDriver();
+  const prev = await getCustomer(c.id);
+  await d.hset(K.customers, { [c.id]: JSON.stringify(c) });
+  // Keep the phone/email lookup index in step with the record.
+  const stale = [prev?.phone && prev.phone !== c.phone ? `phone:${prev.phone}` : "", prev?.email && prev.email !== c.email ? `email:${prev.email.toLowerCase()}` : ""].filter(Boolean);
+  if (stale.length) await d.hdel(K.customerIndex, stale);
+  const index: Record<string, string> = {};
+  if (c.phone) index[`phone:${c.phone}`] = c.id;
+  if (c.email) index[`email:${c.email.toLowerCase()}`] = c.id;
+  if (Object.keys(index).length) await d.hset(K.customerIndex, index);
+  return c;
+}
+
+export async function listCustomers(): Promise<Customer[]> {
+  const all = await getDriver().hgetall(K.customers);
+  return Object.values(all)
+    .map((j) => parse<Customer>(j))
+    .filter((c): c is Customer => !!c)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+// ---------------------------------------------------------- One-time codes
+
+export type OtpRecord = { hash: string; exp: number; attempts: number; sentAt: number };
+
+export async function getOtp(key: string) {
+  return parse<OtpRecord>(await getDriver().get(K.otp(key)));
+}
+
+export async function putOtp(key: string, rec: OtpRecord) {
+  await getDriver().set(K.otp(key), JSON.stringify(rec));
+}
+
+export async function deleteOtp(key: string) {
+  await getDriver().del(K.otp(key));
+}
+
+// ------------------------------------------------------------- Rate limits
+
+/**
+ * Fixed-window rate limiter. Returns true if this hit is allowed (and counts it),
+ * false once `limit` hits have happened inside the current window.
+ */
+export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  const d = getDriver();
+  const rec = parse<{ n: number; until: number }>(await d.get(K.rateLimit(key)));
+  const nowMs = Date.now();
+  if (!rec || rec.until < nowMs) {
+    await d.set(K.rateLimit(key), JSON.stringify({ n: 1, until: nowMs + windowSeconds * 1000 }));
+    return true;
+  }
+  if (rec.n >= limit) return false;
+  await d.set(K.rateLimit(key), JSON.stringify({ n: rec.n + 1, until: rec.until }));
+  return true;
+}
+
+// ---------------------------------------------------------- Session epoch
+
+/** Bumping the epoch invalidates every admin and customer session issued before it. */
+export async function getSessionEpoch(): Promise<number> {
+  return Number((await getDriver().get(K.sessionEpoch)) ?? 0);
+}
+
+export async function bumpSessionEpoch(): Promise<number> {
+  return getDriver().incr(K.sessionEpoch);
 }
 
 // --------------------------------------------------------------- Login limit

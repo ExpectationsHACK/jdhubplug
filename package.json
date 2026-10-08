@@ -11,8 +11,10 @@
     "test:orders": "tsx --conditions=react-server scripts/test-orders.mts"
   },
   "dependencies": {
+    "@sentry/nextjs": "^11.5.0",
     "@vercel/blob": "^2.8.1",
     "next": "16.4.0",
+    "posthog-js": "^1.438.2",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
