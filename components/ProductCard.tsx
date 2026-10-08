@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatNaira, gradeName, type Listing } from "@/lib/catalog";
-import { DeviceArt } from "./DeviceArt";
+import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 
 export function GradePill({ grade }: { grade: Listing["grade"] }) {
@@ -30,8 +30,13 @@ export function ProductCard({ item }: { item: Listing }) {
           <Icon name="heart" size={20} />
         </button>
       </div>
-      <Link href={`/product/${item.id}`} className="block">
-        <DeviceArt kind={item.art} tint={item.tint} className="mx-auto my-2 h-44 w-44 transition-transform duration-300 group-hover:scale-[1.04]" />
+      <Link href={`/product/${item.id}`} className="my-3 block overflow-hidden rounded-xl bg-white">
+        <ProductImage
+          item={item}
+          width={480}
+          className="aspect-square w-full transition-transform duration-500 group-hover:scale-[1.04]"
+          artClassName="h-44 w-44"
+        />
       </Link>
       <div className="mt-auto text-center">
         <div className="mb-2 flex items-center justify-center gap-2">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { estimateOffer, formatNaira, grades, listings, tradeInModels, whatsappLink, type Grade } from "@/lib/catalog";
-import { DeviceArt } from "./DeviceArt";
+import { ProductImage } from "./ProductImage";
 import { GradePill } from "./ProductCard";
 import { Icon } from "./Icon";
 
@@ -13,13 +13,18 @@ export function SwapPlanner() {
   const [model, setModel] = useState("iPhone 13");
   const [storage, setStorage] = useState("128GB");
   const [grade, setGrade] = useState<Grade>("great");
-  const [target, setTarget] = useState<string>("iphone-14-128");
+  const [target, setTarget] = useState<string>("iphone-14-1");
 
   const storages = Object.keys(tradeInModels.find((m) => m.model === model)?.storage ?? {});
   const value = estimateOffer(model, storage, grade);
   const pick = targets.find((t) => t.id === target)!;
   const topUp = Math.max(0, pick.price - value);
-  const suggestions = [...targets].filter((t) => t.price > value && t.name !== model).sort((a, b) => a.price - b.price);
+  // One pick per model, cheapest unit first, so the row isn't five copies of the same phone.
+  const suggestions = [...targets]
+    .filter((t) => t.price > value && t.name !== model)
+    .sort((a, b) => a.price - b.price)
+    .filter((t, i, all) => all.findIndex((x) => x.model === t.model) === i)
+    .slice(0, 12);
 
   return (
     <div className="space-y-10">
@@ -65,7 +70,7 @@ export function SwapPlanner() {
         </div>
 
         <div className="flex items-center gap-4 rounded-tile bg-stage p-6">
-          <DeviceArt kind={pick.art} tint={pick.tint} className="h-32 w-32 shrink-0" />
+          <ProductImage item={pick} width={320} className="h-32 w-32 shrink-0 rounded-xl" artClassName="h-32 w-32" />
           <div>
             <p className="text-[14px] font-bold text-muted">You get</p>
             <p className="mt-1 text-[20px] font-bold">{pick.name}</p>
@@ -108,7 +113,7 @@ export function SwapPlanner() {
               onClick={() => setTarget(s.id)}
               className={`w-60 shrink-0 rounded-tile bg-stage p-5 text-left ring-accent transition ${target === s.id ? "ring-2" : "hover:bg-[#ececec]"}`}
             >
-              <DeviceArt kind={s.art} tint={s.tint} className="mx-auto h-28 w-28" />
+              <ProductImage item={s} width={320} className="aspect-square w-full rounded-xl" artClassName="h-28 w-28" />
               <p className="mt-3 text-[15px] font-bold">{s.name}</p>
               <p className="text-[12px] text-muted">{s.spec}</p>
               <p className="mt-3 text-[13px]">

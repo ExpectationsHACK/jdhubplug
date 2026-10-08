@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { categories, listings } from "@/lib/catalog";
+import { categories, featuredIn } from "@/lib/catalog";
 import { Icon } from "./Icon";
 import { ProductCard } from "./ProductCard";
 
 /** Home "Shop" module: text tabs per category, a row of graded product cards. */
 export function ShowcaseTabs() {
   const [tab, setTab] = useState(categories[0].slug);
-  const items = listings.filter((l) => l.category === tab).slice(0, 4);
+  const items = featuredIn(tab, 8);
   const cat = categories.find((c) => c.slug === tab)!;
 
   return (

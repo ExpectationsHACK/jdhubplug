@@ -16,6 +16,8 @@ const priceBands = [
 
 type Sort = "featured" | "price-asc" | "price-desc" | "rating";
 
+const PAGE = 24;
+
 /** Reads `?brand=` so mega-menu brand links land pre-filtered. Must render inside <Suspense>. */
 export function ShopGridFromParams(props: { items: Listing[]; showCategory?: boolean }) {
   const brand = useSearchParams().get("brand");
@@ -39,6 +41,12 @@ export function ShopGrid({
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [sort, setSort] = useState<Sort>("featured");
   const [panel, setPanel] = useState(false);
+  const [limit, setLimit] = useState(PAGE);
+  // Any filter change starts the list from the top again.
+  const reset1 = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    setLimit(PAGE);
+  };
 
   const brands = useMemo(() => [...new Set(items.map((i) => i.brand))].sort(), [items]);
 
@@ -70,6 +78,7 @@ export function ShopGrid({
     setPrice([]);
     setState([]);
     setVerifiedOnly(false);
+    setLimit(PAGE);
   };
 
   const filters = (
@@ -79,20 +88,20 @@ export function ShopGrid({
           title="Category"
           options={categories.map((c) => [c.slug, c.name])}
           value={cat}
-          onChange={setCat}
+          onChange={reset1(setCat)}
         />
       )}
-      <FilterGroup title="Brand" options={brands.map((b) => [b, b])} value={brand} onChange={setBrand} />
-      <FilterGroup title="Condition" options={grades.map((g) => [g.id, g.name])} value={grade} onChange={setGrade} />
-      <FilterGroup title="Price" options={priceBands.map((p) => [p.id, p.label])} value={price} onChange={setPrice} />
-      <FilterGroup title="Location" options={states.map((s) => [s, s])} value={state} onChange={setState} />
+      <FilterGroup title="Brand" options={brands.map((b) => [b, b])} value={brand} onChange={reset1(setBrand)} />
+      <FilterGroup title="Condition" options={grades.map((g) => [g.id, g.name])} value={grade} onChange={reset1(setGrade)} />
+      <FilterGroup title="Price" options={priceBands.map((p) => [p.id, p.label])} value={price} onChange={reset1(setPrice)} />
+      <FilterGroup title="Location" options={states.map((s) => [s, s])} value={state} onChange={reset1(setState)} />
       <div className="py-5">
         <label className="flex cursor-pointer items-center justify-between text-[15px] font-bold">
           Verified sellers only
           <input
             type="checkbox"
             checked={verifiedOnly}
-            onChange={(e) => setVerifiedOnly(e.target.checked)}
+            onChange={(e) => reset1(setVerifiedOnly)(e.target.checked)}
             className="h-5 w-5 accent-[var(--accent)]"
           />
         </label>
@@ -139,7 +148,7 @@ export function ShopGrid({
 
         {shown.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {shown.map((l) => (
+            {shown.slice(0, limit).map((l) => (
               <ProductCard key={l.id} item={l} />
             ))}
           </div>
@@ -149,6 +158,16 @@ export function ShopGrid({
             <p className="mt-2 text-[14px] text-ink-2">New graded stock lands every day. Try widening your search.</p>
             <button onClick={reset} className="btn btn-primary mt-6">
               Reset filters
+            </button>
+          </div>
+        )}
+        {shown.length > limit && (
+          <div className="mt-10 text-center">
+            <p className="mb-4 text-[13px] text-muted">
+              Showing {limit} of {shown.length}
+            </p>
+            <button onClick={() => setLimit((n) => n + PAGE)} className="btn btn-outline btn-lg">
+              View more
             </button>
           </div>
         )}

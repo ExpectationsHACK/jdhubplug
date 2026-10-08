@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { categories, listings, formatNaira } from "@/lib/catalog";
-import { DeviceArt } from "./DeviceArt";
+import { categories, featuredIn, listings, formatNaira } from "@/lib/catalog";
+import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 import { Logo } from "./Logo";
 
@@ -120,7 +120,7 @@ export function Header() {
 
 function MegaMenu({ slug, onNavigate }: { slug: string; onNavigate: () => void }) {
   const cat = categories.find((c) => c.slug === slug)!;
-  const featured = listings.filter((l) => l.category === slug).slice(0, 4);
+  const featured = featuredIn(cat.slug, 4);
   return (
     <div className="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_12px_24px_rgba(0,0,0,0.06)] lg:block">
       <div className="wrap grid grid-cols-[220px_1fr] gap-10 py-8">
@@ -148,8 +148,8 @@ function MegaMenu({ slug, onNavigate }: { slug: string; onNavigate: () => void }
         <div className="grid grid-cols-4 gap-4">
           {featured.map((l) => (
             <Link key={l.id} href={`/product/${l.id}`} onClick={onNavigate} className="group text-center">
-              <div className="rounded-tile bg-stage p-4 transition-colors group-hover:bg-[#ececec]">
-                <DeviceArt kind={l.art} tint={l.tint} className="mx-auto h-32 w-32" />
+              <div className="overflow-hidden rounded-tile bg-stage">
+                <ProductImage item={l} width={320} className="aspect-square w-full transition-transform duration-300 group-hover:scale-105" artClassName="h-32 w-32" />
               </div>
               <p className="mt-3 text-[14px] font-bold">{l.name}</p>
               <p className="text-[13px] text-muted">From {formatNaira(l.price)}</p>
@@ -189,7 +189,7 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
               {results.map((l) => (
                 <li key={l.id}>
                   <Link href={`/product/${l.id}`} onClick={onClose} className="flex items-center gap-4 py-3 hover:bg-stage">
-                    <DeviceArt kind={l.art} tint={l.tint} className="h-12 w-12" />
+                    <ProductImage item={l} width={120} className="h-12 w-12 shrink-0 rounded-lg" artClassName="h-12 w-12" />
                     <span className="flex-1">
                       <span className="block text-[15px] font-bold">{l.name}</span>
                       <span className="text-[13px] text-muted">{l.spec}</span>

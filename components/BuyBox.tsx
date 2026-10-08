@@ -32,7 +32,7 @@ export function BuyBox({ item }: { item: Listing }) {
           <GradePill grade={item.grade} />
           <span className="text-[14px] font-bold">{grade.summary}</span>
         </div>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{grade.detail}</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{isCar ? grade.carDetail : grade.detail}</p>
       </div>
 
       {(item.options ?? []).map((o) => (

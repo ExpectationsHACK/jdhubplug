@@ -82,7 +82,7 @@ export function Footer() {
             <Link href="/trust" className="hover:underline">Privacy</Link>
             <Link href="/trust" className="hover:underline">Terms of use</Link>
             <Link href="/trust#escrow" className="hover:underline">Escrow terms</Link>
-            <Link href="/trust#contact" className="hover:underline">Sitemap</Link>
+            <Link href="/credits" className="hover:underline">Photo credits</Link>
           </div>
         </div>
         <p className="mt-6 text-muted">
