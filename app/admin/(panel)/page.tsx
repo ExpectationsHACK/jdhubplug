@@ -379,7 +379,7 @@ async function setupChecklist(settings: Settings, offerCount: number, isOwner: b
     },
     {
       label: "Connect permanent storage",
-      body: "Upstash Redis keeps products and orders safe.",
+      body: "Supabase keeps products, orders and accounts safe.",
       href: "#health",
       done: storage.kind === "redis",
     },

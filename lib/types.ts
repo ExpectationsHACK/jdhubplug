@@ -277,7 +277,7 @@ export type Settings = {
   requireAccountForCheckout: boolean;
 };
 
-export type StorageKind = "redis" | "file" | "memory";
+export type StorageKind = "supabase" | "redis" | "file" | "memory";
 
 export type StorageStatus = {
   kind: StorageKind;

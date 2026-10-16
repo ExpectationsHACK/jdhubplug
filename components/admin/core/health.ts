@@ -36,7 +36,7 @@ export function systemHealth(): HealthCheck[] {
             label: "Storage",
             status: "bad",
             detail: `${storage.label}: edits and orders are lost on restart.`,
-            fix: storage.hint ?? "Vercel → Storage → Upstash for Redis, connect it to this project, then redeploy.",
+            fix: storage.hint ?? "Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel, run supabase/migrations/0001_jdhub_store.sql in the Supabase SQL editor, then redeploy.",
           },
     env.ADMIN_PASSWORD
       ? { id: "admin-password", label: "Owner password", status: "ok", detail: "ADMIN_PASSWORD is set." }

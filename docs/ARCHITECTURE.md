@@ -31,8 +31,11 @@ proxy.ts                     redirects signed-out visitors away from /admin
 
 ## Data rules
 
-- **Storage.** `lib/store` talks to Upstash Redis when `KV_REST_API_URL`/`KV_REST_API_TOKEN`
-  are set, otherwise to memory (snapshotted to `.data/` in development). The first read
+- **Storage.** `lib/store` talks to **Supabase Postgres** when `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` are set (through the `jd_*` SQL functions in
+  `supabase/migrations/0001_jdhub_store.sql`; stock reservation is one Postgres
+  transaction with row locks), else Upstash Redis (`KV_REST_API_URL`/`KV_REST_API_TOKEN`),
+  else memory (snapshotted to `.data/` in development). The first read
   seeds the catalog from `lib/models.ts`.
 - **Storefront reads** go through `lib/data.ts` (`getCatalog`, `getCatalogProduct`,
   `getStoreSettings`, `getPublicOffer`). They are `'use cache'` functions tagged

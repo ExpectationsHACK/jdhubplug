@@ -7,6 +7,7 @@ import type { StorageStatus } from "../types";
 
 // Minimal key-value driver used by the store. Two implementations:
 //
+//  - SupabaseDriver: Supabase Postgres via SQL functions (preferred when configured).
 //  - RedisDriver: Upstash Redis over its REST API (what Vercel's Upstash / KV
 //    integration provides). Persistent and shared by every serverless instance.
 //  - MemoryDriver: an in-process map. In development it is snapshotted to
@@ -144,6 +145,98 @@ class RedisDriver implements Driver {
   }
 }
 
+// ----------------------------------------------------------- Supabase (RPC)
+
+/**
+ * Supabase Postgres, through the jd_* SQL functions in
+ * supabase/migrations/0001_jdhub_store.sql, called over Supabase's REST API with the
+ * service-role key (server only). Stock reservation runs inside one Postgres
+ * transaction with row locks, so it is atomic across every server instance.
+ */
+class SupabaseDriver implements Driver {
+  readonly status: StorageStatus = { kind: "supabase", persistent: true, label: "Supabase (Postgres)" };
+  constructor(
+    private url: string,
+    private key: string,
+    private fetchImpl: typeof fetch = fetch,
+  ) {}
+
+  private async rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
+    const res = await this.fetchImpl(`${this.url}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: this.key, Authorization: `Bearer ${this.key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+      cache: "no-store",
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      const hint = res.status === 404 ? " (run supabase/migrations/0001_jdhub_store.sql in the Supabase SQL editor)" : "";
+      throw new Error(`Supabase ${fn} failed: ${res.status} ${text.slice(0, 200)}${hint}`);
+    }
+    return (text ? JSON.parse(text) : null) as T;
+  }
+
+  async get(key: string) {
+    return (await this.rpc<string | null>("jd_get", { k: key })) ?? null;
+  }
+  async set(key: string, value: string) {
+    await this.rpc("jd_set", { k: key, v: value });
+  }
+  async setNx(key: string, value: string, ttl: number) {
+    return !!(await this.rpc<boolean>("jd_setnx", { k: key, v: value, ttl }));
+  }
+  async del(key: string) {
+    await this.rpc("jd_del", { k: key });
+  }
+  async incr(key: string) {
+    return Number(await this.rpc("jd_incr", { k: key }));
+  }
+  async hget(key: string, field: string) {
+    return (await this.rpc<string | null>("jd_hget", { k: key, f: field })) ?? null;
+  }
+  async hgetall(key: string) {
+    return (await this.rpc<Record<string, string>>("jd_hgetall", { k: key })) ?? {};
+  }
+  async hmget(key: string, fields: string[]) {
+    if (!fields.length) return [];
+    return (await this.rpc<(string | null)[]>("jd_hmget", { k: key, fields })) ?? fields.map(() => null);
+  }
+  async hset(key: string, values: Record<string, string>) {
+    const entries = Object.entries(values);
+    for (let i = 0; i < entries.length; i += 200) {
+      await this.rpc("jd_hset", { k: key, vals: Object.fromEntries(entries.slice(i, i + 200)) });
+    }
+  }
+  async hdel(key: string, fields: string[]) {
+    if (fields.length) await this.rpc("jd_hdel", { k: key, fields });
+  }
+  async hincrby(key: string, field: string, by: number) {
+    return Number(await this.rpc("jd_hincrby", { k: key, f: field, by }));
+  }
+  async lpush(key: string, value: string) {
+    await this.rpc("jd_lpush", { k: key, v: value });
+  }
+  async ltrim(key: string, start: number, stop: number) {
+    await this.rpc("jd_ltrim", { k: key, start, stop });
+  }
+  async lrange(key: string, start: number, stop: number) {
+    return (await this.rpc<string[]>("jd_lrange", { k: key, start, stop })) ?? [];
+  }
+  async reserve(stockKey: string, soldKey: string, lines: [string, number][]) {
+    const res = await this.rpc<{ ok: boolean; id?: string; available?: number }>("jd_reserve", { stock_key: stockKey, sold_key: soldKey, lines });
+    if (res.ok) return { ok: true as const };
+    return { ok: false as const, id: String(res.id), available: Number(res.available ?? 0) };
+  }
+  async release(stockKey: string, soldKey: string, lines: [string, number][]) {
+    if (lines.length) await this.rpc("jd_release", { stock_key: stockKey, sold_key: soldKey, lines });
+  }
+}
+
+/** For tests: a Supabase driver with an injected fetch. */
+export function createSupabaseDriver(url: string, key: string, fetchImpl?: typeof fetch): Driver {
+  return new SupabaseDriver(url.replace(/\/$/, ""), key, fetchImpl);
+}
+
 // --------------------------------------------------------------------- Memory
 
 type Snapshot = {
@@ -162,12 +255,12 @@ class MemoryDriver implements Driver {
 
   constructor(private file: string | null) {
     this.status = file
-      ? { kind: "file", persistent: true, label: "Local file (.data/jdhub-store.json)", hint: "Development only. Connect Upstash Redis on Vercel for production." }
+      ? { kind: "file", persistent: true, label: "Local file (.data/jdhub-store.json)", hint: "Development only. Connect Supabase for production." }
       : {
           kind: "memory",
           persistent: false,
           label: "Temporary memory",
-          hint: "Changes and orders are lost when the server restarts and are not shared between server instances. Add Upstash Redis in Vercel (Storage → Upstash for Redis) to make them permanent.",
+          hint: "Changes and orders are lost when the server restarts and are not shared between server instances. Connect Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY, then run supabase/migrations/0001_jdhub_store.sql) to make them permanent.",
         };
     if (file) this.load();
   }
@@ -317,6 +410,12 @@ const g = globalThis as unknown as { __jdhubDriver?: Driver };
 
 export function getDriver(): Driver {
   if (g.__jdhubDriver) return g.__jdhubDriver;
+  const sbUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (sbUrl && sbKey) {
+    g.__jdhubDriver = createSupabaseDriver(sbUrl, sbKey);
+    return g.__jdhubDriver;
+  }
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (url && token) {
