@@ -22,7 +22,8 @@ export async function GET(request: Request) {
   // Reading the request keeps this handler dynamic (never prerendered at build time).
   const header = request.headers.get("authorization") ?? "";
   const secret = process.env.CRON_SECRET;
-  if (secret && !safeEqual(header, `Bearer ${secret}`)) {
+  // In production the sweep needs CRON_SECRET; without it nobody can call it (checkouts still sweep).
+  if (secret ? !safeEqual(header, `Bearer ${secret}`) : process.env.NODE_ENV === "production") {
     return Response.json({ error: "Unauthorized" }, { status: 401, headers: { "Cache-Control": "no-store" } });
   }
 

@@ -37,7 +37,7 @@ async function Checkout() {
   return (
     <CheckoutForm
       paystack={paystackEnabled()}
-      prefill={customer ? { name: customer.name, phone: customer.phone, email: customer.email, address: customer.address, city: customer.city, state: customer.state } : undefined}
+      prefill={customer ? { name: customer.name, phone: customer.phone ?? customer.contactPhone, email: customer.email ?? customer.contactEmail, address: customer.address, city: customer.city, state: customer.state } : undefined}
       settings={{
         hubs: s.hubs,
         deliveryFeeLagos: s.deliveryFeeLagos,

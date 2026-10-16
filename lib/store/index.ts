@@ -22,7 +22,7 @@ export { storageStatus };
 //   jd:customers  hash  id -> Customer JSON
 //   jd:customer:by hash "phone:+234..." | "email:..." -> customer id
 //   jd:otp:{key}  string one-time code record (hashed code, expiry, attempts)
-//   jd:rl:{key}   string rate-limit window record
+//   jd:rl:{key}:{window} counter for one rate-limit window (expires with it)
 //   jd:meta       hash  seeded -> seed version
 //   jd:seq:order  counter for order numbers
 
@@ -40,7 +40,6 @@ const K = {
   meta: "jd:meta",
   orderSeq: "jd:seq:order",
   seedLock: "jd:seed-lock",
-  loginFail: (who: string) => `jd:loginfail:${who}`,
   customers: "jd:customers",
   customerIndex: "jd:customer:by",
   otp: (key: string) => `jd:otp:${key}`,
@@ -430,16 +429,11 @@ export async function deleteOtp(key: string) {
  * false once `limit` hits have happened inside the current window.
  */
 export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  // One atomic counter per window: parallel requests can't all read the same count.
   const d = getDriver();
-  const rec = parse<{ n: number; until: number }>(await d.get(K.rateLimit(key)));
-  const nowMs = Date.now();
-  if (!rec || rec.until < nowMs) {
-    await d.set(K.rateLimit(key), JSON.stringify({ n: 1, until: nowMs + windowSeconds * 1000 }));
-    return true;
-  }
-  if (rec.n >= limit) return false;
-  await d.set(K.rateLimit(key), JSON.stringify({ n: rec.n + 1, until: rec.until }));
-  return true;
+  const k = K.rateLimit(`${key}:${Math.floor(Date.now() / (windowSeconds * 1000))}`);
+  await d.setNx(k, "0", windowSeconds + 60);
+  return (await d.incr(k)) <= limit;
 }
 
 // ---------------------------------------------------------- Session epoch
@@ -451,26 +445,6 @@ export async function getSessionEpoch(): Promise<number> {
 
 export async function bumpSessionEpoch(): Promise<number> {
   return getDriver().incr(K.sessionEpoch);
-}
-
-// --------------------------------------------------------------- Login limit
-
-/** Failed logins in the current 15-minute window for this key (IP or email). */
-export async function loginFailures(who: string): Promise<number> {
-  const rec = parse<{ n: number; until: number }>(await getDriver().get(K.loginFail(who)));
-  if (!rec || rec.until < Date.now()) return 0;
-  return rec.n;
-}
-
-export async function recordLoginFailure(who: string) {
-  const d = getDriver();
-  const rec = parse<{ n: number; until: number }>(await d.get(K.loginFail(who)));
-  const fresh = !rec || rec.until < Date.now();
-  await d.set(K.loginFail(who), JSON.stringify({ n: fresh ? 1 : rec!.n + 1, until: fresh ? Date.now() + 15 * 60_000 : rec!.until }));
-}
-
-export async function clearLoginFailures(who: string) {
-  await getDriver().del(K.loginFail(who));
 }
 
 // --------------------------------------------------------------------- Locks

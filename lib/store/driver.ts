@@ -332,7 +332,7 @@ class MemoryDriver implements Driver {
     this.persist();
   }
   async incr(key: string) {
-    const n = Number(this.strings.get(key) ?? 0) + 1;
+    const n = Number((this.alive(key) && this.strings.get(key)) || 0) + 1;
     this.strings.set(key, String(n));
     this.persist();
     return n;

@@ -18,7 +18,8 @@ import { customerSignInAvailable } from "@/lib/otp";
 import { initializeTransaction, paystackEnabled, requestOrigin, siteUrl } from "@/lib/paystack";
 import { describeDiscount, priceCart, type PricedCart } from "@/lib/pricing";
 import { refreshFromAction } from "@/lib/revalidate";
-import { getOffer, getOfferStats, getProducts, getSettings, logAudit, normalizeCode } from "@/lib/store";
+import { clientIp } from "@/lib/request-ip";
+import { getOffer, getOfferStats, getProducts, getSettings, logAudit, normalizeCode, rateLimit } from "@/lib/store";
 import type { DeliveryMethod, PaymentMethod } from "@/lib/types";
 
 // Checkout Server Actions. Everything the client sends is treated as untrusted:
@@ -147,6 +148,12 @@ export async function submitOrder(raw: CheckoutInput): Promise<SubmitResult> {
 
   const items = cleanItems(raw.items);
   if (!items.length) return { ok: false, error: "Your cart is empty." };
+
+  // Each order holds stock until it's paid or expires, so cap how fast anyone can place them.
+  const phoneKey = normalizePhone(input.phone) ?? input.phone;
+  if (!(await rateLimit(`order-ip:${await clientIp()}`, 10, 3600)) || !(await rateLimit(`order-phone:${phoneKey}`, 6, 3600))) {
+    return { ok: false, error: "You've placed several orders in the last hour. Please wait a little, or message us on WhatsApp to order." };
+  }
 
   const hub = delivery === "pickup" ? settings.hubs.find((h) => h.city === input.pickupHub) : undefined;
   const state = hub ? (hubState(hub) ?? (STATES.includes(input.state) ? input.state : "Lagos")) : input.state;

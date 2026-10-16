@@ -90,7 +90,9 @@ export async function initializeTransaction(order: Order, site: string): Promise
       amount: Math.round(order.total * 100),
       currency: "NGN",
       reference,
-      callback_url: `${site}/api/paystack/callback`,
+      // The order token rides along so the callback can return the shopper to their order
+      // without trusting the reference (which only names the order id).
+      callback_url: `${site}/api/paystack/callback?t=${encodeURIComponent(order.token)}`,
       metadata: {
         orderId: order.id,
         token: order.token,

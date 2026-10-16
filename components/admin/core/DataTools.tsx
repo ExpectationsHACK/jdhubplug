@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useActionState, useId, useRef, useState } from "react";
-import { resetCatalogAction, type ResetState } from "@/app/admin/(panel)/settings/data/actions";
+import { resetCatalogAction, signOutEveryoneAction, type ResetState } from "@/app/admin/(panel)/settings/data/actions";
 import { fieldCls } from "./form-bits";
 import { AdminIcon } from "./icons";
 
@@ -319,6 +319,49 @@ export function ResetCard() {
       </form>
       {state.message && (
         <p role={state.ok ? "status" : "alert"} className={`mt-3 text-[13px] font-bold ${state.ok ? "text-ok" : "text-sale"}`}>
+          {state.message}
+        </p>
+      )}
+    </Box>
+  );
+}
+
+export function SignOutEveryoneCard() {
+  const [state, action, pending] = useActionState<ResetState, FormData>(signOutEveryoneAction, {});
+  const [typed, setTyped] = useState("");
+  const id = useId();
+  return (
+    <Box
+      icon="lock"
+      tone="danger"
+      title="Sign out everyone"
+      description="Ends every admin and shopper session on every device, including yours. Use it if a password or device may be compromised. Accounts and data are not changed."
+    >
+      {state.ok ? (
+        <p role="status" className="text-[13px] font-bold text-ok">
+          {state.message}{" "}
+          <a href="/admin/login" className="underline underline-offset-2">
+            Sign in again
+          </a>
+        </p>
+      ) : (
+        <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <label htmlFor={id} className="mb-1.5 block text-[13px] font-bold text-ink-2">
+              Type <span className="font-mono">SIGN OUT</span> to confirm
+            </label>
+            <input id={id} name="confirm" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} className={`${fieldCls()} font-mono`} />
+          </div>
+          <button
+            disabled={typed !== "SIGN OUT" || pending}
+            className="btn min-h-[46px] border-sale bg-sale text-white hover:bg-[#c00040] disabled:border-transparent"
+          >
+            {pending ? "Signing out…" : "Sign out everyone"}
+          </button>
+        </form>
+      )}
+      {state.message && !state.ok && (
+        <p role="alert" className="mt-3 text-[13px] font-bold text-sale">
           {state.message}
         </p>
       )}

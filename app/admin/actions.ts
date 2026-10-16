@@ -5,13 +5,14 @@ import { audit, getSession, login, logout, requireAdmin } from "@/lib/auth";
 import { TAGS } from "@/lib/data";
 import { sweepExpiredOrders } from "@/lib/orders";
 import { refreshFromAction } from "@/lib/revalidate";
+import { safePath } from "@/lib/safe-path";
 
 export type LoginState = { error?: string };
 
 /** Only same-site admin paths, and never back into the login flow (e.g. /admin/login/signout). */
 function safeNext(raw: FormDataEntryValue | null) {
-  const next = typeof raw === "string" ? raw : "";
-  if (!next.startsWith("/admin") || next.startsWith("//") || next.startsWith("/admin/login")) return "/admin";
+  const next = safePath(typeof raw === "string" ? raw : "", "/admin", { allowAdmin: true });
+  if (!/^\/admin(\/|$|\?)/.test(next) || next.startsWith("/admin/login")) return "/admin";
   return next;
 }
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { BackupCard, ResetCard, RestoreCard } from "@/components/admin/core/DataTools";
+import { BackupCard, ResetCard, RestoreCard, SignOutEveryoneCard } from "@/components/admin/core/DataTools";
 import { AdminIcon } from "@/components/admin/core/icons";
 import { NoAccess, SettingsTabs } from "@/components/admin/core/SettingsTabs";
 import { AdminPage, PageHeader } from "@/components/admin/ui";
@@ -34,17 +34,18 @@ async function DataBody() {
       <div className="flex flex-col gap-4">
         <div
           className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-[13px] ${
-            storage.kind === "redis" ? "border-line bg-white text-ink-2" : "border-[#f5c06b] bg-[#fff8eb] text-[#7a4b00]"
+            storage.persistent && storage.kind !== "file" ? "border-line bg-white text-ink-2" : "border-[#f5c06b] bg-[#fff8eb] text-[#7a4b00]"
           }`}
         >
           <AdminIcon name="database" size={18} className="mt-0.5 shrink-0" />
           <p>
             <b>Storage: {storage.label}.</b> {storage.hint ?? "Data is saved permanently and shared by every server."}
-            {storage.kind !== "redis" && " Download a backup before redeploying, then restore it once Redis is connected."}
+            {(!storage.persistent || storage.kind === "file") && " Download a backup before redeploying, then restore it once Supabase is connected."}
           </p>
         </div>
         <BackupCard counts={{ products: products.length, orders: orders.length, offers: offers.length, leads: leads.length }} />
         <RestoreCard />
+        <SignOutEveryoneCard />
         <ResetCard />
       </div>
     </>

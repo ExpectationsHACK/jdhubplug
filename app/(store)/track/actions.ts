@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { findOrderByPhone } from "@/lib/orders";
+import { clientIp } from "@/lib/request-ip";
+import { rateLimit } from "@/lib/store";
 
 export type TrackState = { error?: string; id?: string; phone?: string };
 
@@ -15,6 +17,12 @@ export async function trackOrder(_prev: TrackState, form: FormData): Promise<Tra
 
   if (!/^JDH-\d{4,8}$/.test(id)) return { error: "Enter your order number, e.g. JDH-10234.", id: raw, phone };
   if (phone.replace(/\D/g, "").length < 10) return { error: "Enter the phone number you used at checkout.", id: raw, phone };
+
+  // Order numbers are sequential, so lookups are limited per visitor and per phone.
+  const digitsOnly = phone.replace(/\D/g, "").slice(-10);
+  if (!(await rateLimit(`track-ip:${await clientIp()}`, 20, 15 * 60)) || !(await rateLimit(`track-phone:${digitsOnly}`, 10, 15 * 60))) {
+    return { error: "Too many lookups. Please wait 15 minutes and try again.", id: raw, phone };
+  }
 
   const order = await findOrderByPhone(id, phone);
   if (!order) {

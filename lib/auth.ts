@@ -1,17 +1,16 @@
 import "server-only";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { clientIp } from "./request-ip";
 import { fingerprint, SESSION_COOKIE, SESSION_TTL_SECONDS, signSession, verifySession, type Session } from "./session";
 import {
   bumpSessionEpoch,
-  clearLoginFailures,
   findStaffByEmail,
   getSessionEpoch,
   listStaff,
-  loginFailures,
   logAudit,
-  recordLoginFailure,
+  rateLimit,
   saveStaff,
 } from "./store";
 import type { Role, StaffUser } from "./types";
@@ -124,23 +123,21 @@ export async function requireAdmin(perm?: Permission): Promise<Session> {
   return s;
 }
 
-async function clientKey() {
-  const h = await headers();
-  return (h.get("x-forwarded-for")?.split(",")[0] || h.get("x-real-ip") || "unknown").trim();
-}
 
 export type LoginResult = { ok: true; session: Session } | { ok: false; error: string };
 
 /** Verify credentials and set the session cookie. Use from a Server Action. */
 export async function login(email: string, password: string): Promise<LoginResult> {
-  const ip = await clientKey();
-  if ((await loginFailures(ip)) >= 8) return { ok: false, error: "Too many attempts. Wait 15 minutes and try again." };
+  const ip = await clientIp();
+  const e = email.trim().toLowerCase();
+  // Every attempt counts (atomically), per IP and per account, before the password is checked.
+  const allowed = (await rateLimit(`login-ip:${ip}`, 10, 15 * 60)) && (await rateLimit(`login-id:${e || "owner"}`, 10, 15 * 60));
+  if (!allowed) return { ok: false, error: "Too many attempts. Wait 15 minutes and try again." };
 
   const owner = ownerPassword();
   if (!owner) return { ok: false, error: "The admin isn't set up yet. Add ADMIN_PASSWORD in your Vercel environment variables." };
 
   let session: Omit<Session, "exp" | "ep"> | null = null;
-  const e = email.trim().toLowerCase();
 
   if (!e || e === (process.env.ADMIN_EMAIL ?? "").toLowerCase() || e === "owner") {
     if (safeEqual(password, owner)) session = { sub: "owner", name: "Owner", role: "owner", fp: await fingerprint(owner) };
@@ -156,12 +153,8 @@ export async function login(email: string, password: string): Promise<LoginResul
     }
   }
 
-  if (!session) {
-    await recordLoginFailure(ip);
-    return { ok: false, error: "Wrong email or password." };
-  }
+  if (!session) return { ok: false, error: "Wrong email or password." };
 
-  await clearLoginFailures(ip);
   const token = await signSession({ ...session, ep: await getSessionEpoch() });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
