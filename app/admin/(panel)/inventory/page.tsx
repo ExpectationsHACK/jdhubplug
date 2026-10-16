@@ -8,7 +8,7 @@ import { AdminPage, Card, PageHeader, StatCard, relTime } from "@/components/adm
 import { ProductImage } from "@/components/ProductImage";
 import { s } from "@/components/admin/products/styles";
 import { can, requireAdmin } from "@/lib/auth";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { getSettings, listProducts } from "@/lib/store";
 import { requestNow } from "../products/_lib/time";
 

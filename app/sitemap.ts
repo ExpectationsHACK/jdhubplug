@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/components/home/site";
-import { categories } from "@/lib/catalog";
+import { categories } from "@/lib/reference";
 import { getCatalog } from "@/lib/data";
 
 // Public pages plus every active product. Cached with the catalog tag, so new and

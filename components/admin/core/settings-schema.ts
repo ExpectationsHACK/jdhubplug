@@ -77,6 +77,7 @@ export type SettingsInput = {
   hubs?: unknown;
   bank?: unknown;
   hideSoldOut?: unknown;
+  requireAccountForCheckout?: unknown;
   heroProductIds?: unknown;
 };
 
@@ -188,6 +189,8 @@ export function validateSettings(input: SettingsInput, opts: { knownProductIds?:
       hubs,
       bank,
       hideSoldOut: bool(input.hideSoldOut),
+      // Older backups predate this setting; keep sign-in required by default.
+      requireAccountForCheckout: input.requireAccountForCheckout === undefined ? true : bool(input.requireAccountForCheckout),
       heroProductIds,
     },
   };

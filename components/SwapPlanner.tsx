@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { estimateOffer, formatNaira, grades, tradeInModels, type Grade } from "@/lib/catalog";
+import { estimateOffer, formatNaira, grades, tradeInModels, type Grade } from "@/lib/reference";
 import { DEFAULT_SETTINGS, waLink } from "@/lib/settings";
 import type { Product } from "@/lib/types";
 import { tradeInImage } from "./checkout/tradein";

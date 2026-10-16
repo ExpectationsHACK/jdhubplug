@@ -42,6 +42,7 @@ export async function saveSettingsAction(_prev: SettingsState, form: FormData): 
       hubs: cities.slice(0, 50).map((c, i) => ({ city: c, address: addresses[i], hours: openHours[i] })),
       bank: { bankName: str(form, "bankName"), accountName: str(form, "accountName"), accountNumber: str(form, "accountNumber") },
       hideSoldOut: form.get("hideSoldOut") === "on",
+      requireAccountForCheckout: form.get("requireAccountForCheckout") === "on",
       heroProductIds: form.getAll("hero").slice(0, 50),
     },
     { knownProductIds: new Set(products.map((p) => p.id)) },

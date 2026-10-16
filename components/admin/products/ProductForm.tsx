@@ -8,7 +8,7 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import { DeviceArt } from "@/components/DeviceArt";
 import { Icon } from "@/components/Icon";
 import { ProductCard } from "@/components/ProductCard";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { productImageSrc } from "@/lib/photos";
 import type { ArtKind, CategorySlug, Product } from "@/lib/types";
 import { Dialog } from "./Dialog";

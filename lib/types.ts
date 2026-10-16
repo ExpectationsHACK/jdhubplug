@@ -96,6 +96,9 @@ export type OrderLine = {
   spec: string;
   photo?: string;
   imageUrl?: string;
+  /** Fallback illustration, copied from the product so old orders render after it's deleted. */
+  art?: ArtKind;
+  tint?: string;
   qty: number;
   /** Unit price before any offer. */
   unitPrice: number;

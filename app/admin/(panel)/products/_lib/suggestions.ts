@@ -1,6 +1,6 @@
 import "server-only";
 
-import { categories } from "@/lib/catalog";
+import { categories } from "@/lib/reference";
 import type { Product } from "@/lib/types";
 
 /** Autocomplete values for the product form, drawn from the live catalog. */

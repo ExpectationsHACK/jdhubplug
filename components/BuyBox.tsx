@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { formatNaira, grades } from "@/lib/catalog";
+import { formatNaira, grades } from "@/lib/reference";
 import { DEFAULT_SETTINGS, waLink } from "@/lib/settings";
 import type { Product } from "@/lib/types";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { toCartProduct, useCart } from "./cart/CartProvider";
 import { Icon, WhatsAppGlyph } from "./Icon";
 import { LeadForm } from "./LeadForm";
+import { OfferPrice } from "./offers/OfferPrice";
 import { GradePill } from "./ProductCard";
 
 // Each listing is one specific graded unit (or a few identical accessories), so there
@@ -61,6 +62,7 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
       <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="display text-[32px]">{formatNaira(item.price)}</p>
+          <OfferPrice product={item} className="text-[15px]" />
           {saving > 0 && (
             <p className="text-[14px]">
               <span className="text-muted line-through">{formatNaira(item.was!)}</span>{" "}

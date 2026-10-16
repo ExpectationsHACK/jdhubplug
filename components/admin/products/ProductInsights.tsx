@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, EmptyState, relTime } from "@/components/admin/ui";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import type { AuditEntry, Product } from "@/lib/types";
 
 // Server-rendered side cards for the product edit page: sales performance and the

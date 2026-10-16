@@ -1,5 +1,5 @@
 import { useId } from "react";
-import type { ArtKind } from "@/lib/catalog";
+import type { ArtKind } from "@/lib/reference";
 
 // Product renders as clean vector illustrations. Real listings would swap these
 // for photography shot on the same light-grey studio backdrop.

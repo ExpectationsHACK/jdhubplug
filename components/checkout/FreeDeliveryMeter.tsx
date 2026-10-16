@@ -1,4 +1,4 @@
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { Icon } from "../Icon";
 
 /** Progress towards free delivery. Renders nothing when free delivery is switched off. */

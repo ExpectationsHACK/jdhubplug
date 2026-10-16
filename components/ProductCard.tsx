@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ViewTransition, type CSSProperties } from "react";
 import type { Product } from "@/lib/types";
+import { OfferPrice } from "./offers/OfferPrice";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { formatNaira, gradeLabel } from "./home/format";
 import { Tilt } from "./motion/Tilt";
@@ -85,7 +86,12 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
             <p className="mt-1 line-clamp-1 text-[12px] text-muted sm:text-[13px]">{item.spec}</p>
           </Link>
           <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1 text-[11px] text-muted sm:text-[12px]">
-            <Icon name="star" size={13} className="fill-ink text-ink" /> {item.rating} ({item.reviews}) · {item.state}
+            {item.reviews > 0 && (
+              <>
+                <Icon name="star" size={13} className="fill-ink text-ink" /> {item.rating} ({item.reviews}) ·
+              </>
+            )}{" "}
+            {item.state}
           </p>
           <p className="mt-2 text-[16px] font-bold sm:mt-3 sm:text-[18px]">
             {formatNaira(item.price)}
@@ -93,6 +99,7 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
               <span className="ml-2 inline-block text-[12px] font-normal text-muted line-through sm:text-[13px]">{formatNaira(item.was)}</span>
             )}
           </p>
+          <OfferPrice product={item} className="text-[13px]" />
           <AddToCartButton product={item} className="btn btn-primary mt-3 w-full px-3 sm:mt-4" />
         </div>
       </Tilt>

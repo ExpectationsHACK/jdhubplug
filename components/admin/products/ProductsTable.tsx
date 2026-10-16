@@ -6,7 +6,7 @@ import { Badge as Pill, EmptyState, inputCls, relTime, type Tone } from "@/compo
 import { Icon } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
 import { adjustStockAction, bulkProductsAction, setStockAction, updatePriceAction } from "@/app/admin/(panel)/products/actions";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import type { Badge, ProductStatus } from "@/lib/types";
 import { Dialog } from "./Dialog";
 import { InlinePrice, StockNote, StockStepper } from "./InlineEditors";

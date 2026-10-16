@@ -1,6 +1,7 @@
 import "server-only";
 
 import { buildSeedProducts } from "../catalog";
+import { normalizeCode } from "../codes";
 import { withDefaults } from "../settings";
 import type { AuditEntry, Customer, Lead, Offer, OfferStats, Order, Product, Settings, StaffUser } from "../types";
 import { getDriver, storageStatus } from "./driver";
@@ -247,13 +248,7 @@ export async function listOrders(): Promise<Order[]> {
 
 // -------------------------------------------------------------------- Offers
 
-export const normalizeCode = (code: string) =>
-  code
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
+export { normalizeCode };
 
 export async function listOffers(): Promise<Offer[]> {
   const all = await getDriver().hgetall(K.offers);
@@ -325,6 +320,10 @@ export async function listLeads(): Promise<Lead[]> {
     .map((j) => parse<Lead>(j))
     .filter((l): l is Lead => !!l)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getLead(id: string): Promise<Lead | null> {
+  return parse<Lead>(await getDriver().hget(K.leads, id));
 }
 
 export async function saveLead(l: Lead) {

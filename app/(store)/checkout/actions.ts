@@ -12,7 +12,9 @@ import {
   type SubmitResult,
 } from "@/components/checkout/shared";
 import { TAGS } from "@/lib/data";
+import { getCurrentCustomer, updateCustomerProfile } from "@/lib/customer-auth";
 import { placeOrder } from "@/lib/orders";
+import { customerSignInAvailable } from "@/lib/otp";
 import { initializeTransaction, paystackEnabled, requestOrigin, siteUrl } from "@/lib/paystack";
 import { describeDiscount, priceCart, type PricedCart } from "@/lib/pricing";
 import { refreshFromAction } from "@/lib/revalidate";
@@ -119,6 +121,11 @@ export async function submitOrder(raw: CheckoutInput): Promise<SubmitResult> {
   if (str(raw.company, 100)) return { ok: false, error: "Please check your details and try again." };
 
   const settings = await getSettings();
+  // Sign-in is enforced here too, not just on the page, so the action can't be called around it.
+  const customer = await getCurrentCustomer();
+  if (settings.requireAccountForCheckout && customerSignInAvailable() && !customer) {
+    return { ok: false, error: "Please sign in to place your order." };
+  }
   const paystack = paystackEnabled();
   const delivery = cleanDelivery(raw.delivery);
   const payment = (["paystack", "transfer", "whatsapp"] as const).includes(raw.payment) ? (raw.payment as PaymentMethod) : ("" as PaymentMethod);
@@ -148,6 +155,8 @@ export async function submitOrder(raw: CheckoutInput): Promise<SubmitResult> {
   const result = await placeOrder({
     items,
     offerCode,
+    customerId: customer?.id,
+    analyticsId: str(raw.analyticsId, 200) || undefined,
     customer: {
       name: input.name,
       phone: normalizePhone(input.phone)!,
@@ -170,6 +179,17 @@ export async function submitOrder(raw: CheckoutInput): Promise<SubmitResult> {
   }
 
   const { order } = result;
+  if (customer) {
+    // Remember delivery details for next time (verified phone/email are never overwritten).
+    await updateCustomerProfile(customer.id, {
+      name: input.name,
+      email: input.email || undefined,
+      phone: input.phone,
+      address: delivery === "delivery" ? input.address : undefined,
+      city: delivery === "delivery" ? input.city : undefined,
+      state: delivery === "delivery" ? state : undefined,
+    }).catch(() => undefined);
+  }
   // Stock changed: refresh product pages, grids and offer counters right away.
   refreshFromAction(TAGS.catalog, TAGS.offers);
   await logAudit({

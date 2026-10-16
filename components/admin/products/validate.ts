@@ -2,7 +2,7 @@
 // and the CSV import (authoritative). Isomorphic and dependency-free apart from
 // reference data, so the same checks run in the browser and on the server.
 
-import { states } from "@/lib/catalog";
+import { states } from "@/lib/reference";
 import type { ArtKind, Badge, CategorySlug, Grade, Product, ProductStatus } from "@/lib/types";
 
 export const CATEGORY_OPTIONS: { value: CategorySlug; label: string }[] = [

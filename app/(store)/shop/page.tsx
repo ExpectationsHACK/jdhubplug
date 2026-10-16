@@ -4,7 +4,7 @@ import { featuredIn, getStorefront } from "@/components/home/storefront";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { PageHero, PhotoCollage } from "@/components/PageHero";
 import { ShopGrid, ShopGridFromParams } from "@/components/ShopGrid";
-import { categories } from "@/lib/catalog";
+import { categories } from "@/lib/reference";
 
 export const metadata: Metadata = {
   title: "Shop all",

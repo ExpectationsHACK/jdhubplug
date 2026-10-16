@@ -6,7 +6,7 @@ import { Reveal, RevealText } from "@/components/motion/Reveal";
 import { PageHero } from "@/components/PageHero";
 import { ProductImage } from "@/components/ProductImage";
 import { TrustLookup } from "@/components/TrustLookup";
-import { grades } from "@/lib/catalog";
+import { grades } from "@/lib/reference";
 import { waLink } from "@/lib/settings";
 
 export const metadata: Metadata = {

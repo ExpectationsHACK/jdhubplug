@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { FreeDeliveryMeter } from "../checkout/FreeDeliveryMeter";
 import { CommerceMotion } from "../checkout/Motion";
 import { lineProblemText } from "../checkout/shared";
@@ -58,8 +58,8 @@ export function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Cart"
-        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+          isOpen ? "translate-x-0 shadow-2xl" : "translate-x-full shadow-none"
         }`}
       >
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-line px-5">

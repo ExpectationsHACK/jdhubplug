@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useEffect, useId } from "react";
+import { track } from "@/lib/analytics";
 import { submitLead, type LeadState } from "@/app/(store)/lead-actions";
 import type { LeadType } from "@/lib/types";
 import { CommerceMotion } from "./checkout/Motion";
@@ -29,6 +30,9 @@ export function LeadForm({
 }) {
   const [state, action, pending] = useActionState<LeadState, FormData>(submitLead, {});
   const id = useId();
+  useEffect(() => {
+    if (state.ok) track("lead_submitted", { lead_type: type });
+  }, [state.ok, type]);
   if (state.ok) {
     return (
       <div className={`fade-in flex items-start gap-3 rounded-xl p-4 ${dark ? "bg-white/10 text-white" : "bg-[#e6f6ee] text-ok"}`} role="status">

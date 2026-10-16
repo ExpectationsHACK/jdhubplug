@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cloneElement, useId, useMemo, useRef, useState, useTransition } from "react";
+import { cloneElement, useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 import { submitOrder } from "@/app/(store)/checkout/actions";
 import { useCart } from "@/components/cart/CartProvider";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
-import { formatNaira } from "@/lib/catalog";
+import { analyticsId, track } from "@/lib/analytics";
+import { formatNaira } from "@/lib/reference";
 import type { DeliveryMethod, Hub, PaymentMethod } from "@/lib/types";
 import { FreeDeliveryMeter } from "./FreeDeliveryMeter";
 import { CommerceMotion } from "./Motion";
@@ -46,7 +47,9 @@ const holdText = (minutes: number) =>
       : `${minutes} minutes`;
 
 /** Checkout: contact, delivery, payment and a live server-priced summary. */
-export function CheckoutForm({ settings, paystack }: { settings: CheckoutSettings; paystack: boolean }) {
+export type CheckoutPrefill = { name?: string; phone?: string; email?: string; address?: string; city?: string; state?: string };
+
+export function CheckoutForm({ settings, paystack, prefill }: { settings: CheckoutSettings; paystack: boolean; prefill?: CheckoutPrefill }) {
   const cart = useCart();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -54,12 +57,12 @@ export function CheckoutForm({ settings, paystack }: { settings: CheckoutSetting
   const formRef = useRef<HTMLFormElement>(null);
 
   const [f, setF] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    city: "",
-    state: "Lagos",
+    name: prefill?.name ?? "",
+    phone: prefill?.phone ? prefill.phone.replace(/^\+234/, "0") : "",
+    email: prefill?.email ?? "",
+    address: prefill?.address ?? "",
+    city: prefill?.city ?? "",
+    state: prefill?.state ?? "Lagos",
     note: "",
     company: "",
     pickupHub: settings.hubs[0]?.city ?? "",
@@ -71,6 +74,14 @@ export function CheckoutForm({ settings, paystack }: { settings: CheckoutSetting
   const [codeDraft, setCodeDraft] = useState<string | null>(null);
 
   const items = useMemo(() => cart.items.map((i) => ({ productId: i.product.id, qty: i.qty })), [cart.items]);
+
+  // Funnel step: once per visit to checkout, after the cart has loaded.
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (!cart.hydrated || tracked.current || !cart.items.length) return;
+    tracked.current = true;
+    track("checkout_started", { items: cart.count, value: cart.subtotal, currency: "NGN", offer_code: cart.offerCode ?? undefined, signed_in: !!prefill });
+  }, [cart.hydrated, cart.items.length, cart.count, cart.subtotal, cart.offerCode, prefill]);
   const { preview, loading, error: previewError, seed, refresh } = useCheckoutPreview(
     cart.hydrated && !placed ? { items, offerCode: cart.offerCode, delivery, state: f.state } : null,
   );
@@ -99,7 +110,7 @@ export function CheckoutForm({ settings, paystack }: { settings: CheckoutSetting
     setFormError(null);
     startTransition(async () => {
       try {
-        const res = await submitOrder({ ...f, delivery, payment, items, offerCode: cart.offerCode });
+        const res = await submitOrder({ ...f, delivery, payment, items, offerCode: cart.offerCode, analyticsId: analyticsId() });
         if (res.ok) {
           setPlaced(true);
           try {

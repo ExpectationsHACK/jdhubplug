@@ -41,6 +41,13 @@ const ROLE_PERMS: Record<Role, Permission[]> = {
 
 export const ROLE_LABEL: Record<Role, string> = { owner: "Owner", manager: "Manager", support: "Support" };
 
+export const ALL_PERMISSIONS = ROLE_PERMS.owner;
+
+/** Permissions granted to a role (for showing the role matrix). */
+export function permissionsFor(role: Role): Permission[] {
+  return [...ROLE_PERMS[role]];
+}
+
 export function can(role: Role, perm: Permission) {
   return ROLE_PERMS[role].includes(perm);
 }
@@ -163,7 +170,7 @@ export async function login(email: string, password: string): Promise<LoginResul
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
-  await logAudit({ by: session.name, action: "auth.login", detail: `role ${session.role}` }).catch(() => undefined);
+  await logAudit({ by: `${session.name} (${ROLE_LABEL[session.role]})`, action: "auth.login" }).catch(() => undefined);
   return { ok: true, session: { ...session, exp: 0 } };
 }
 

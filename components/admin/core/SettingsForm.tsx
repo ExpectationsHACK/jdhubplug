@@ -338,6 +338,13 @@ function Fields({
             defaultChecked={settings.hideSoldOut}
             disabled={readOnly}
           />
+          <Switch
+            name="requireAccountForCheckout"
+            label="Require sign-in at checkout"
+            description="Shoppers confirm their phone or email with a one-time code before placing an order. Needs an SMS (Termii) or email (Resend) key; without one, checkout stays open to guests."
+            defaultChecked={settings.requireAccountForCheckout}
+            disabled={readOnly}
+          />
           <div className="border-t border-line pt-5">
             <p className="text-[14px] font-bold">Hero showcase</p>
             <p className="mb-3 mt-0.5 text-[13px] text-muted">Up to {LIMITS.heroProducts} products, in the order they appear on the home page.</p>

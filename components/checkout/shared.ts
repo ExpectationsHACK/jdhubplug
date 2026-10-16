@@ -1,7 +1,7 @@
 // Checkout types and validation shared by the client form and the Server Actions.
 // Isomorphic: no server imports. The server always re-runs these checks.
 
-import { states } from "@/lib/catalog";
+import { states } from "@/lib/reference";
 import type { ArtKind, CategorySlug, DeliveryMethod, Hub, PaymentMethod } from "@/lib/types";
 
 export type LineProblem = "missing" | "inactive" | "sold-out" | "insufficient";
@@ -58,6 +58,8 @@ export type CheckoutInput = PreviewInput & {
   note?: string;
   /** Honeypot: real shoppers never see or fill this. */
   company?: string;
+  /** PostHog distinct id, so the server-side order event joins this visitor's journey. */
+  analyticsId?: string;
 };
 
 export type SubmitResult =

@@ -6,7 +6,7 @@ import { PageTransition } from "@/components/motion/PageTransition";
 import { PageHero, PhotoCollage } from "@/components/PageHero";
 import { ShopGrid, ShopGridFromParams } from "@/components/ShopGrid";
 import { productImageSrc } from "@/lib/photos";
-import { categories, getCategory } from "@/lib/catalog";
+import { categories, getCategory } from "@/lib/reference";
 
 export function generateStaticParams() {
   return categories.map((c) => ({ category: c.slug }));

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { productProps, track } from "@/lib/analytics";
 import { Icon } from "../Icon";
 import { toCartProduct, useCart, type CartProduct } from "./CartProvider";
 
@@ -45,6 +46,7 @@ export function AddToCartButton({
         const from = card?.querySelector("img") ?? card ?? flyFrom?.() ?? e.currentTarget;
         if (add(toCartProduct(product), units, from)) {
           setAdded(true);
+          track("product_added_to_cart", { ...productProps(product), quantity: units });
           onAdded?.();
           setTimeout(() => setAdded(false), 1400);
           if (openCart) setTimeout(open, 950);

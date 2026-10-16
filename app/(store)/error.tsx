@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { Icon } from "@/components/Icon";
 
 // Storefront error boundary: a friendly message and a retry, header and footer stay.
 export default function StoreError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   useEffect(() => {
-    console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

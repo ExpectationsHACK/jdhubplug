@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { s } from "./styles";
 import { MAX_PRICE, MAX_STOCK, parseWhole } from "./validate";
 

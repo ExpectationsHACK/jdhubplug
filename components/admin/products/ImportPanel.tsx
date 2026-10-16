@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Badge, Card } from "@/components/admin/ui";
 import { Icon } from "@/components/Icon";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { toCsv } from "@/lib/csv";
 import { CSV_COLUMNS, MAX_IMPORT_ROWS, templateRows, type ImportSummary } from "./csv-schema";
 import { s } from "./styles";

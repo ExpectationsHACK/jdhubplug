@@ -8,7 +8,7 @@ import { OrderTracker } from "@/components/checkout/OrderTracker";
 import { PAYMENT_LABEL } from "@/components/checkout/shared";
 import { Icon, WhatsAppGlyph } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { getCatalog, getStoreSettings } from "@/lib/data";
 import { getOrderForCustomer, STATUS_LABEL } from "@/lib/orders";
 import { paystackEnabled } from "@/lib/paystack";

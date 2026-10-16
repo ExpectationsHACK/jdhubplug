@@ -2,7 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 import QRCode from "qrcode";
-import { categories } from "@/lib/catalog";
+import { categories } from "@/lib/reference";
 import { listProducts } from "@/lib/store";
 import type { PickerProduct } from "./ProductPicker";
 

@@ -1,6 +1,7 @@
 // Offer form input: the shape the admin form sends, plus validation shared by the
 // client (instant feedback) and the Server Action (the real check). Isomorphic.
 
+import { normalizeCode } from "@/lib/codes";
 import type { CategorySlug, Offer, OfferDiscount, OfferScope } from "@/lib/types";
 
 export const CATEGORY_SLUGS: CategorySlug[] = ["phones", "accessories", "gadgets", "cars"];
@@ -29,14 +30,8 @@ export type OfferFieldErrors = Partial<Record<keyof OfferInput | "form", string>
 
 export type ValidOffer = Omit<Offer, "createdAt" | "updatedAt">;
 
-/** Same rules as normalizeCode in lib/store (kept here because that module is server-only). */
-export const normalizeOfferCode = (code: string) =>
-  code
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
+/** Shared with the server (lib/codes.ts). */
+export const normalizeOfferCode = normalizeCode;
 
 /** Lagos is UTC+1 all year. */
 const LAGOS_OFFSET_MS = 60 * 60 * 1000;

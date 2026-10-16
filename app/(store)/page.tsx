@@ -10,7 +10,7 @@ import { ProductOrbit } from "@/components/motion/ProductOrbit";
 import { Reveal, RevealText } from "@/components/motion/Reveal";
 import { ScrollSpotlight } from "@/components/motion/ScrollSpotlight";
 import { ShowcaseTabs } from "@/components/ShowcaseTabs";
-import { categories, grades } from "@/lib/catalog";
+import { categories, grades } from "@/lib/reference";
 import type { CategorySlug, Product } from "@/lib/types";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };

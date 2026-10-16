@@ -5,7 +5,11 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getStorefront, navCategories, slim } from "@/components/home/storefront";
 import { ScrollProgress } from "@/components/motion/PageTransition";
+import { AnalyticsIdentity } from "@/components/AnalyticsIdentity";
+import { ActiveOfferBanner } from "@/components/offers/ActiveOfferBanner";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
+import { getCurrentCustomer } from "@/lib/customer-auth";
+import { Suspense } from "react";
 
 // Storefront chrome: header, footer, cart. The admin (/admin) has its own layout.
 // Catalog and settings are cached reads (lib/data.ts), refreshed when the admin
@@ -24,6 +28,10 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
         searchIndex={products.map(slim)}
         promo={{ text: settings.promoText, link: settings.promoLink, enabled: settings.promoEnabled }}
       />
+      <ActiveOfferBanner />
+      <Suspense>
+        <Identity />
+      </Suspense>
       <main id="main" className="flex-1">
         {children}
       </main>
@@ -33,4 +41,10 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
       <FlyToCart />
     </CartProvider>
   );
+}
+
+/** Links analytics to the signed-in customer (request-time, so it streams in). */
+async function Identity() {
+  const customer = await getCurrentCustomer();
+  return <AnalyticsIdentity customerId={customer?.id ?? null} />;
 }

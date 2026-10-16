@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { TrackProductView } from "@/components/TrackProductView";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ViewTransition, type ComponentType } from "react";
-import { BuyBox as BuyBoxComponent } from "@/components/BuyBox";
+import { ViewTransition } from "react";
+import { BuyBox } from "@/components/BuyBox";
 import { absoluteUrl } from "@/components/home/site";
 import { visible } from "@/components/home/storefront";
 import { Icon } from "@/components/Icon";
@@ -11,13 +12,10 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Breadcrumbs } from "@/components/PageHero";
 import { ProductCard, productTransitionName } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
-import { getCategory, gradeName } from "@/lib/catalog";
+import { getCategory, gradeName } from "@/lib/reference";
 import { getCatalog, getCatalogProduct, getStoreSettings } from "@/lib/data";
 import { photoPage, productImageSrc } from "@/lib/photos";
-import type { Product } from "@/lib/types";
 
-// The buy box takes the store's WhatsApp number for enquiries: { item, whatsapp }.
-const BuyBox = BuyBoxComponent as ComponentType<{ item: Product; whatsapp?: string }>;
 
 export async function generateStaticParams() {
   const all = await getCatalog();
@@ -114,6 +112,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
           )}
         </div>
         <BuyBox item={item} whatsapp={settings.whatsapp} />
+        <TrackProductView product={item} />
       </section>
 
       <section className="wrap pt-20" aria-labelledby="specs-title">

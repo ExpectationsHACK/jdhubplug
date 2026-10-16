@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { estimateOffer, formatNaira, grades, tradeInModels, type Grade } from "@/lib/catalog";
+import { estimateOffer, formatNaira, grades, tradeInModels, type Grade } from "@/lib/reference";
 import { DEFAULT_SETTINGS, waLink } from "@/lib/settings";
 import { tradeInImage } from "./checkout/tradein";
 import { Icon, WhatsAppGlyph } from "./Icon";

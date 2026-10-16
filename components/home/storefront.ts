@@ -1,6 +1,6 @@
 import "server-only";
 
-import { categories } from "@/lib/catalog";
+import { categories } from "@/lib/reference";
 import { getCatalog, getStoreSettings } from "@/lib/data";
 import type { CategorySlug, Product, Settings } from "@/lib/types";
 

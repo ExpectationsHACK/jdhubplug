@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { track } from "@/lib/analytics";
 import { useCart } from "@/components/cart/CartProvider";
 import { Icon } from "@/components/Icon";
 import { OfferStyles } from "./OfferStyles";
@@ -16,6 +17,7 @@ export function OfferActivator({ code, live }: { code: string; live: boolean }) 
   useEffect(() => {
     if (!live) return;
     setOfferCode(code);
+    track("offer_applied", { offer_code: code, source: "landing" });
     const show = setTimeout(() => setToast(true), 600);
     const hide = setTimeout(() => setToast(false), 5600);
     return () => {

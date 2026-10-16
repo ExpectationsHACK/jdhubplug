@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { adjustStockAction, setStockAction } from "@/app/admin/(panel)/products/actions";
 import { ProductImage } from "@/components/ProductImage";
-import { formatNaira } from "@/lib/catalog";
+import { formatNaira } from "@/lib/reference";
 import { s } from "./styles";
 import type { ProductRow } from "./types";
 import { useOptimisticRows } from "./useOptimisticRows";
