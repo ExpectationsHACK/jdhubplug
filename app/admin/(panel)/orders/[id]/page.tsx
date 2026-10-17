@@ -3,11 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrderActions } from "@/components/admin/orders/OrderActions";
 import { customerWaLink, itemCount, money, orderStatusMessage, PAYMENT_LABEL, phoneKey, STATUS_LABEL, telHref } from "@/components/admin/orders/format";
+import { OrderMessageList } from "@/components/admin/notifications/MessageLog";
+import { ResendButtons } from "@/components/admin/notifications/NotifyForms";
 import { IconLink, LineThumb, StatusBadge, WaGlyph } from "@/components/admin/orders/parts";
 import { artForLines, requestNow, siteOrigin } from "@/components/admin/orders/server";
 import { CopyLinkButton, NoteForm, TimeLeft } from "@/components/admin/orders/Widgets";
 import { AdminPage, Card, fmtDate, PageHeader, relTime } from "@/components/admin/ui";
 import { can, requireAdmin } from "@/lib/auth";
+import { EVENT_LABEL } from "@/lib/notify/events";
+import { latestEvent } from "@/lib/notify/orders";
+import { listOrderNotifyLog } from "@/lib/notify/store";
 import { ORDER_FLOW } from "@/lib/orders";
 import { getSettings, listOrders } from "@/lib/store";
 import type { Order, OrderEvent, OrderStatus } from "@/lib/types";
@@ -29,7 +34,7 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[id
   const order = orders.find((o) => o.id === id);
   if (!order) notFound();
 
-  const [now, origin, art] = await Promise.all([requestNow(), siteOrigin(), artForLines(order.lines)]);
+  const [now, origin, art, messages] = await Promise.all([requestNow(), siteOrigin(), artForLines(order.lines), listOrderNotifyLog(order.id)]);
   const key = phoneKey(order.customer.phone);
   const customerOrders = orders.filter((o) => phoneKey(o.customer.phone) === key);
   const customerPath = `/order/${order.id}?t=${order.token}`;
@@ -251,6 +256,15 @@ export default async function OrderPage({ params }: PageProps<"/admin/orders/[id
                 Funds are held in escrow until the buyer confirms delivery.
               </p>
             )}
+          </Card>
+
+          <Card title="Messages">
+            {can(session.role, "orders:write") && (
+              <div className="mb-4 border-b border-line pb-4">
+                <ResendButtons id={order.id} latestLabel={EVENT_LABEL[latestEvent(order)]} />
+              </div>
+            )}
+            <OrderMessageList entries={messages} now={now} />
           </Card>
         </aside>
       </div>

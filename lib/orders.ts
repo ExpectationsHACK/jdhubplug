@@ -1,6 +1,7 @@
 import "server-only";
 
 import { captureServer } from "./analytics-server";
+import { notifyOrderPlaced, notifyOrderTransition } from "./notify/orders";
 import { ORDER_FLOW, STATUS_LABEL } from "./order-status";
 import { priceCart, type CartLineInput, type PricedCart } from "./pricing";
 import {
@@ -157,6 +158,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     signed_in: !!order.customerId,
   });
 
+  // Confirmation + store alert, sent after the response (never blocks or fails the order).
+  notifyOrderPlaced(order);
+
   return { ok: true, order };
 }
 
@@ -207,6 +211,7 @@ async function transitionLocked(
     }
     await logAudit({ by, action: `order.${next}`, target: order.id, detail: "Stock restored" }).catch(() => undefined);
     captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.customerId || order.id, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
+    notifyOrderTransition(updated, order.status);
     return updated;
   }
 
@@ -215,6 +220,8 @@ async function transitionLocked(
   if (next === "paid" || next === "completed") {
     captureServer(next === "paid" ? "order_paid" : "order_completed", order.customerId || order.id, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
   }
+  // Only reached on a real status change (the no-op case returned above), so each transition notifies once.
+  notifyOrderTransition(saved, order.status);
   return saved;
 }
 
