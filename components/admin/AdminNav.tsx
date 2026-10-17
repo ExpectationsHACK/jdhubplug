@@ -20,6 +20,7 @@ export const ADMIN_NAV: { href: string; label: string; icon: AdminIconName; grou
   { href: "/admin/orders", label: "Orders", icon: "receipt", group: "Sales" },
   { href: "/admin/customers", label: "Customers", icon: "users", group: "Sales" },
   { href: "/admin/requests", label: "Requests", icon: "inbox", group: "Sales" },
+  { href: "/admin/reviews", label: "Reviews", icon: "star", group: "Sales" },
   // Support staff see settings read-only (delivery fees, hubs and bank details help them answer buyers).
   { href: "/admin/settings", label: "Settings", icon: "settings", group: "Admin" },
   { href: "/admin/staff", label: "Staff", icon: "shieldUser", group: "Admin", roles: ["owner"] },
@@ -33,6 +34,7 @@ const BADGE_HINT: Record<string, string> = {
   "/admin/orders": "need attention",
   "/admin/requests": "new",
   "/admin/inventory": "low on stock",
+  "/admin/reviews": "awaiting approval",
 };
 
 type Badges = Record<string, number>;

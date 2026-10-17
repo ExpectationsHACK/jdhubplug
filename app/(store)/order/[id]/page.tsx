@@ -8,10 +8,13 @@ import { OrderTracker } from "@/components/checkout/OrderTracker";
 import { PAYMENT_LABEL } from "@/components/checkout/shared";
 import { Icon, WhatsAppGlyph } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
+import { Stars } from "@/components/reviews/Stars";
 import { formatNaira } from "@/lib/reference";
 import { getCatalog, getStoreSettings } from "@/lib/data";
 import { getOrderForCustomer, STATUS_LABEL } from "@/lib/orders";
 import { paystackEnabled } from "@/lib/paystack";
+import { isReviewable, REVIEW_STATUS_LABEL, reviewAnchor, reviewKeyFor, reviewsForLines, type Review } from "@/lib/reviews";
 import { waLink } from "@/lib/settings";
 import type { Order, Settings } from "@/lib/types";
 
@@ -37,6 +40,8 @@ async function OrderView({ params, searchParams }: Pick<PageProps<"/order/[id]">
   if (!/^[A-Za-z0-9-]{3,30}$/.test(id) || !/^[a-f0-9]{16,64}$/i.test(token)) notFound();
   const [order, settings, catalog] = await Promise.all([getOrderForCustomer(id, token), getStoreSettings(), getCatalog()]);
   if (!order) notFound();
+  const canReview = isReviewable(order.status);
+  const reviews = canReview ? await reviewsForLines(order.lines.map((l) => ({ orderId: order.id, productId: l.productId }))) : new Map<string, Review>();
   // Illustration fallback for lines whose photo can't load.
   const art = new Map(catalog.map((p) => [p.id, { art: p.art, tint: p.tint }]));
 
@@ -87,13 +92,19 @@ async function OrderView({ params, searchParams }: Pick<PageProps<"/order/[id]">
           {pending && <PaymentCard order={order} settings={settings} />}
 
           {/* Items */}
-          <section className="jdc-in-up rounded-tile border border-line p-5 sm:p-6" style={{ animationDelay: "160ms" }} aria-labelledby="items-h">
+          <section id="review" className="jdc-in-up scroll-mt-24 rounded-tile border border-line p-5 sm:p-6" style={{ animationDelay: "160ms" }} aria-labelledby="items-h">
             <h2 id="items-h" className="text-[18px] font-bold">
               {itemCount} item{itemCount === 1 ? "" : "s"}
             </h2>
             <ul className="mt-4 divide-y divide-line">
               {order.lines.map((l, i) => (
-                <li key={l.productId} className="jdc-in-right flex items-center gap-4 py-4" style={{ animationDelay: `${240 + i * 70}ms` }}>
+                <li
+                  key={l.productId}
+                  id={reviewAnchor(l.productId)}
+                  className="jdc-in-right scroll-mt-24 py-4"
+                  style={{ animationDelay: `${240 + i * 70}ms` }}
+                >
+                  <div className="flex items-center gap-4">
                   <Link href={`/product/${l.productId}`} className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stage">
                     <ProductImage item={{
                         photo: l.photo,
@@ -114,6 +125,8 @@ async function OrderView({ params, searchParams }: Pick<PageProps<"/order/[id]">
                     <p className="text-[15px] font-bold">{formatNaira(l.finalUnitPrice * l.qty)}</p>
                     {l.finalUnitPrice < l.unitPrice && <p className="text-[12px] text-muted line-through">{formatNaira(l.unitPrice * l.qty)}</p>}
                   </div>
+                  </div>
+                  {canReview && <LineReview order={order} productId={l.productId} name={l.name} review={reviews.get(reviewKeyFor(order.id, l.productId))} />}
                 </li>
               ))}
             </ul>
@@ -214,6 +227,33 @@ async function OrderView({ params, searchParams }: Pick<PageProps<"/order/[id]">
           </p>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/** "Rate your purchase" for a delivered line, or the buyer's review once written. */
+function LineReview({ order, productId, name, review }: { order: Order; productId: string; name: string; review?: Review }) {
+  if (!review) {
+    return (
+      <div className="mt-3 sm:pl-24">
+        <ReviewForm orderId={order.id} token={order.token} productId={productId} productName={name} />
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 rounded-xl bg-stage p-3 text-[13px] sm:ml-24">
+      <p className="flex flex-wrap items-center gap-2">
+        <span className="font-bold">Your review</span>
+        <Stars value={review.rating} size={13} />
+        <span className="text-muted">· {review.status === "hidden" ? "Not shown publicly" : REVIEW_STATUS_LABEL[review.status]}</span>
+      </p>
+      {review.title && <p className="mt-1 font-bold">{review.title}</p>}
+      <p className="mt-1 line-clamp-3 whitespace-pre-line break-words text-ink-2">{review.body}</p>
+      {review.adminReply && (
+        <p className="mt-2 border-t border-line pt-2 text-ink-2">
+          <span className="font-bold text-ink">JDHub replied:</span> {review.adminReply.text}
+        </p>
+      )}
     </div>
   );
 }

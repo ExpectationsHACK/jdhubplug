@@ -21,6 +21,9 @@ export type ArtKind =
 
 export type Badge = "New" | "Best seller" | "Hot deal" | "Swap pick";
 
+/** Average (1 decimal) and count of published, verified-purchase reviews. */
+export type RatingSummary = { count: number; average: number };
+
 export type ProductStatus = "active" | "draft" | "archived";
 
 export type Product = {
@@ -41,8 +44,18 @@ export type Product = {
   state: string;
   seller: string;
   verified: boolean;
+  /**
+   * @deprecated Legacy seeded values, not real. The storefront ignores them (lib/data.ts
+   * zeroes them) and shows `ratingSummary` instead. Kept so stored products still parse.
+   */
   rating: number;
+  /** @deprecated See `rating`. */
   reviews: number;
+  /**
+   * Real published-review aggregate for this product's model. Attached by the
+   * storefront reads in lib/data.ts; never stored with the product.
+   */
+  ratingSummary?: RatingSummary;
   /** Fallback illustration kind and tint, used when no photo loads. */
   art: ArtKind;
   tint: string;

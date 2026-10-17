@@ -5,7 +5,8 @@ import { photoPage as commonsPage, photoUrl as commonsUrl } from "./photos";
 // generator that turns `models.ts` into the initial product catalog. The live catalog
 // lives in the store (see lib/store) and is edited from /admin.
 
-import { getCategory, states } from "./reference";
+import { getCategory } from "./reference";
+import { storeSellerFor } from "./seller";
 import type { CategorySlug, Grade, Product } from "./types";
 
 export * from "./reference";
@@ -13,14 +14,9 @@ export { getCategory };
 
 export type { ArtKind, Category, CategorySlug, Grade, Listing, Product } from "./types";
 
-const sellersByState: Record<string, string[]> = {
-  Lagos: ["JDHub Certified", "Ikeja Mobile Hub", "Lekki Tech Store", "Computer Village Plug", "Lens & Light", "JDHub Auto", "Lekki Prestige Cars"],
-  "Abuja (FCT)": ["JDHub Certified", "Wuse Accessories", "Game Zone Abuja", "Banex Gadgets", "Capital Autos"],
-  Rivers: ["PH Gadget Plug", "Garden City Motors", "JDHub Certified"],
-  Oyo: ["Ibadan Phone Mart", "JDHub Certified"],
-  Kano: ["Kano Phones Plaza", "Farm Centre Gadgets"],
-  Enugu: ["Coal City Gadgets", "Ogui Road Autos"],
-};
+// Every seeded listing is JDHub's own stock, shipped from one of its hubs. No invented
+// third-party sellers, ratings, review counts or sales badges.
+const hubStates = ["Lagos", "Abuja (FCT)", "Rivers"];
 
 const gradeCycle: Grade[] = ["like-new", "great", "good", "great", "fair", "like-new", "good"];
 const gradePrice: Record<Grade, number> = { "like-new": 1.08, great: 1, good: 0.9, fair: 0.8 };
@@ -61,11 +57,13 @@ export function buildSeedProducts(): Product[] {
       const tier = m.tiers?.[i % m.tiers.length];
       const color = m.colors?.[(i + 1) % m.colors.length];
       const isCar = m.category === "cars";
-      const state = m.car && i === 0 ? "Lagos" : pick(states);
-      const pool = sellersByState[state].filter((n) => (isCar ? /Auto|Motors|Cars/.test(n) || n === "JDHub Certified" : !/Auto|Motors|Cars/.test(n)));
-      const seller = isCar && pool[0] === "JDHub Certified" ? "JDHub Auto" : pick(pool.length ? pool : ["JDHub Certified"]);
+      const state = m.car && i === 0 ? "Lagos" : pick(hubStates);
+      const seller = storeSellerFor(m.category);
       const price = round((m.price + (tier?.add ?? 0)) * gradePrice[grade] * (0.97 + r() * 0.06), isCar ? 50_000 : 5_000);
       const onOffer = r() < 0.2;
+      // Only show a compare-at price when rounding leaves it above the selling price.
+      const wasPrice = round(price * 1.08, isCar ? 50_000 : 5_000);
+      const was = onOffer && wasPrice > price ? wasPrice : undefined;
 
       let spec: string;
       let attrs: Record<string, string>;
@@ -107,18 +105,18 @@ export function buildSeedProducts(): Product[] {
         name,
         spec,
         price,
-        // Only show a compare-at price when rounding leaves it above the selling price.
-        was: onOffer && round(price * 1.08, isCar ? 50_000 : 5_000) > price ? round(price * 1.08, isCar ? 50_000 : 5_000) : undefined,
+        was,
         grade,
         state,
         seller,
-        verified: seller.startsWith("JDHub") || r() < 0.7,
-        rating: Math.round((4.2 + r() * 0.8) * 10) / 10,
-        reviews: Math.floor(isCar ? 2 + r() * 30 : 8 + r() * 420),
+        verified: true,
+        // Real ratings come from verified-purchase reviews (lib/reviews.ts), never the seed.
+        rating: 0,
+        reviews: 0,
         art: m.art,
         tint: m.tint,
         photo: m.photo,
-        badge: onOffer ? "Hot deal" : i === 0 && r() < 0.35 ? "Best seller" : r() < 0.08 ? "New" : m.category === "phones" && r() < 0.1 ? "Swap pick" : undefined,
+        badge: was ? "Hot deal" : undefined,
         attrs,
         stock: seedStock(m.category, r),
         sold: 0,

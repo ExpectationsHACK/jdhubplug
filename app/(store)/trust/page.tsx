@@ -12,15 +12,15 @@ import { waLink } from "@/lib/settings";
 export const metadata: Metadata = {
   title: "Trust & Safety",
   description:
-    "Escrow on every order, one grading standard, IMEI and VIN checks and a public scam-report lookup. How JDHub keeps trade safe in Nigeria.",
+    "Escrow on every order, one grading standard and IMEI/VIN checks on everything we sell. How JDHub keeps trade safe in Nigeria.",
   alternates: { canonical: "/trust" },
 };
 
 const escrow: { icon: IconName; title: string; body: string }[] = [
-  { icon: "wallet", title: "You pay into escrow", body: "Your money goes to a protected holding account, not the seller." },
-  { icon: "truck", title: "Seller ships", body: "The seller sends the item, or you collect it at a JDHub hub." },
+  { icon: "wallet", title: "You pay into escrow", body: "Your money is held in a protected account until you confirm the item." },
+  { icon: "truck", title: "We ship", body: "JDHub inspects and sends the item, or you collect it at a JDHub hub." },
   { icon: "checkCircle", title: "You confirm", body: "Check it matches its grade. You have 48 hours to confirm or raise an issue." },
-  { icon: "shield", title: "Funds release", body: "Only then does the seller get paid. Not as described? You get refunded." },
+  { icon: "shield", title: "Funds release", body: "Only then is the payment released. Not as described? You get refunded." },
 ];
 
 export default async function TrustPage() {
@@ -39,7 +39,7 @@ export default async function TrustPage() {
         trail={[["Home", "/"], ["Trust & Safety"]]}
         eyebrow="Trust & Safety"
         title="Nobody has to go first."
-        body="Escrow on every order, one grading standard, and public checks that keep stolen devices and scammers off JDHub."
+        body="Escrow on every order, one grading standard, and IMEI and VIN checks on every phone and car we sell."
       />
 
       <section id="escrow" className="wrap scroll-mt-24">
@@ -61,7 +61,8 @@ export default async function TrustPage() {
           <div>
             <RevealText text="Check before you pay" className="display text-[28px] md:text-[36px]" />
             <p className="mt-2 max-w-2xl text-ink-2">
-              Check any phone&apos;s IMEI or car&apos;s VIN, or look up a seller&apos;s number in community scam reports. Free, no account needed.
+              JDHub checks every phone&apos;s IMEI and every car&apos;s VIN before it&apos;s listed. Buying elsewhere? Make sure the number
+              you&apos;re given is at least a valid IMEI or VIN. Free, no account needed.
             </p>
           </div>
           {(verifyPhoto || carPhoto) && (
