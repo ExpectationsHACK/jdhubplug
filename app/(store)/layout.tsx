@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { FlyToCart } from "@/components/cart/FlyToCart";
+import { ConsentBanner } from "@/components/consent/ConsentBanner";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getStorefront, navCategories, slim } from "@/components/home/storefront";
@@ -9,9 +11,9 @@ import { AnalyticsIdentity } from "@/components/AnalyticsIdentity";
 import { ActiveOfferBanner } from "@/components/offers/ActiveOfferBanner";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
 import { getCurrentCustomer } from "@/lib/customer-auth";
-import { Suspense } from "react";
+import { getLegalContent } from "@/lib/legal-store";
 
-// Storefront chrome: header, footer, cart. The admin (/admin) has its own layout.
+// Storefront chrome: header, footer, cart, cookie consent. The admin (/admin) has its own layout.
 // Catalog and settings are cached reads (lib/data.ts), refreshed when the admin
 // edits products or settings and when purchases move stock.
 export default async function StoreLayout({ children }: LayoutProps<"/">) {
@@ -39,6 +41,9 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
       <WhatsAppFab whatsapp={settings.whatsapp} storeName={settings.storeName} />
       <CartDrawer />
       <FlyToCart />
+      <Suspense fallback={null}>
+        <Consent />
+      </Suspense>
     </CartProvider>
   );
 }
@@ -47,4 +52,10 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
 async function Identity() {
   const customer = await getCurrentCustomer();
   return <AnalyticsIdentity customerId={customer?.id ?? null} />;
+}
+
+/** Cookie banner; whether consent is required is an admin setting (/admin/privacy). */
+async function Consent() {
+  const legal = await getLegalContent();
+  return <ConsentBanner required={legal.requireConsent} />;
 }

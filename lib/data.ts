@@ -14,6 +14,7 @@ export const TAGS = {
   catalog: "catalog",
   settings: "settings",
   offers: "offers",
+  legal: "legal",
 } as const;
 
 /** Products visible on the storefront (status "active"), newest first. Includes sold-out items. */

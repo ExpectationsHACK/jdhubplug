@@ -5,12 +5,16 @@ import { after } from "next/server";
 // Server-side analytics for events the browser can't be trusted with (orders,
 // payments). Sent straight to PostHog's capture API after the response is
 // flushed, so it never slows a request down. No-op without NEXT_PUBLIC_POSTHOG_KEY.
+//
+// Consent (NDPA): the browser only sends its PostHog id once the visitor has accepted
+// analytics (lib/analytics.ts analyticsId()). Call sites pass that id, never a customer
+// or order id, and nothing is sent without it.
 
 export type ServerEvent = "order_placed" | "order_paid" | "order_cancelled" | "order_refunded" | "order_completed" | "offer_link_opened";
 
-export function captureServer(event: ServerEvent, distinctId: string, properties: Record<string, unknown> = {}) {
+export function captureServer(event: ServerEvent, distinctId: string | undefined, properties: Record<string, unknown> = {}) {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  if (!key) return;
+  if (!key || !distinctId) return;
   const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
   const send = () =>
     fetch(`${host}/i/v0/e/`, {

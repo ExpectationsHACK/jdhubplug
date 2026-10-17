@@ -117,6 +117,8 @@ export type Order = {
   id: string; // e.g. JDH-10234
   /** Signed-in customer who placed the order. */
   customerId?: string;
+  /** PostHog id of the browser that placed it, only when the visitor consented to analytics. */
+  analyticsId?: string;
   /** Secret used in customer-facing links so order pages can't be enumerated. */
   token: string;
   createdAt: string;

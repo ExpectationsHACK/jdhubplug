@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/components/home/site";
 import { categories } from "@/lib/reference";
 import { getCatalog } from "@/lib/data";
+import { LEGAL_PAGES } from "@/lib/legal";
 
 // Public pages plus every active product. Cached with the catalog tag, so new and
 // removed products show up after the next catalog refresh.
@@ -23,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl("/swap"), changeFrequency: "monthly", priority: 0.7 },
     { url: absoluteUrl("/trust"), changeFrequency: "monthly", priority: 0.6 },
     { url: absoluteUrl("/vendors"), changeFrequency: "monthly", priority: 0.5 },
+    ...LEGAL_PAGES.map((p) => ({ url: absoluteUrl(`/${p}`), changeFrequency: "yearly" as const, priority: 0.3 })),
   ];
 
   return [

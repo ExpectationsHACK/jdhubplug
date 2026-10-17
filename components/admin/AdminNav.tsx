@@ -22,6 +22,7 @@ export const ADMIN_NAV: { href: string; label: string; icon: AdminIconName; grou
   { href: "/admin/requests", label: "Requests", icon: "inbox", group: "Sales" },
   // Support staff see settings read-only (delivery fees, hubs and bank details help them answer buyers).
   { href: "/admin/settings", label: "Settings", icon: "settings", group: "Admin" },
+  { href: "/admin/privacy", label: "Privacy & legal", icon: "lock", group: "Admin", roles: ["owner", "manager"] },
   { href: "/admin/staff", label: "Staff", icon: "shieldUser", group: "Admin", roles: ["owner"] },
   { href: "/admin/activity", label: "Activity log", icon: "activity", group: "Admin", roles: ["owner", "manager"] },
 ];

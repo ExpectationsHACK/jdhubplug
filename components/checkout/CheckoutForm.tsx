@@ -458,11 +458,19 @@ export function CheckoutForm({ settings, paystack, prefill }: { settings: Checko
             )}
           </button>
           <p className="mt-3 text-center text-[12px] text-muted">
-            By placing your order you agree to JDHub&apos;s escrow and{" "}
-            <Link href="/trust" className="underline underline-offset-2">
-              7-day return terms
+            By placing your order you agree to the{" "}
+            <Link href="/terms" className="underline underline-offset-2">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline underline-offset-2">
+              Privacy Policy
             </Link>
-            .
+            , including our{" "}
+            <Link href="/returns" className="underline underline-offset-2">
+              returns &amp; warranty
+            </Link>{" "}
+            terms.
           </p>
         </div>
 
