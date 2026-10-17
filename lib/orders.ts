@@ -5,6 +5,7 @@ import { ORDER_FLOW, STATUS_LABEL } from "./order-status";
 import { priceCart, type CartLineInput, type PricedCart } from "./pricing";
 import {
   bumpOfferStat,
+  claimOfferUse,
   getOffer,
   getOfferStats,
   getOrder,
@@ -84,8 +85,16 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     return { ok: false, error: msg, cart, soldOutId: bad?.product.id };
   }
 
+  // Take the offer use before the stock, atomically, so a limited offer can't be oversold.
+  const offerCode = cart.offer?.code;
+  if (offerCode && !(await claimOfferUse(offerCode, cart.offer?.usageLimit))) {
+    return { ok: false, error: "This offer has just been fully used. Remove the code to continue at the normal price.", cart };
+  }
+  const releaseOffer = () => (offerCode ? bumpOfferStat(offerCode, "orders", -1).catch(() => undefined) : undefined);
+
   const reservation = await reserveStock(cart.lines.map((l) => ({ productId: l.product.id, qty: l.qty })));
   if (!reservation.ok) {
+    await releaseOffer();
     const name = products.get(reservation.id)?.name ?? "An item";
     return {
       ok: false,
@@ -132,14 +141,13 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   try {
     await saveOrder(order);
   } catch (e) {
-    // Never strand reserved stock if the order can't be written.
+    // Never strand reserved stock (or an offer use) if the order can't be written.
     await releaseStock(order.lines);
+    await releaseOffer();
     throw e;
   }
 
-  if (order.offerCode) {
-    await Promise.all([bumpOfferStat(order.offerCode, "orders", 1), bumpOfferStat(order.offerCode, "revenue", order.total)]).catch(() => undefined);
-  }
+  if (order.offerCode) await bumpOfferStat(order.offerCode, "revenue", order.total).catch(() => undefined);
 
   captureServer("order_placed", input.analyticsId || input.customerId || order.id, {
     order_id: order.id,
@@ -203,7 +211,11 @@ async function transitionLocked(
     await saveOrder(updated); // mark first, so a crash can't cause a double restock
     await releaseStock(order.lines);
     if (order.offerCode) {
-      await Promise.all([bumpOfferStat(order.offerCode, "orders", -1), bumpOfferStat(order.offerCode, "revenue", -order.total)]).catch(() => undefined);
+      await Promise.all([
+        bumpOfferStat(order.offerCode, "orders", -1),
+        bumpOfferStat(order.offerCode, "revenue", -order.total),
+        order.payment.paidAt ? bumpOfferStat(order.offerCode, "paid", -1) : undefined,
+      ]).catch(() => undefined);
     }
     await logAudit({ by, action: `order.${next}`, target: order.id, detail: "Stock restored" }).catch(() => undefined);
     captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.customerId || order.id, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
@@ -211,6 +223,7 @@ async function transitionLocked(
   }
 
   const saved = await saveOrder(updated);
+  if (next === "paid" && order.offerCode && !order.payment.paidAt) await bumpOfferStat(order.offerCode, "paid", 1).catch(() => undefined);
   await logAudit({ by, action: `order.${next}`, target: order.id, detail: opts.note }).catch(() => undefined);
   if (next === "paid" || next === "completed") {
     captureServer(next === "paid" ? "order_paid" : "order_completed", order.customerId || order.id, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });

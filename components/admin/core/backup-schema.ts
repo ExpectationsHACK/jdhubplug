@@ -267,7 +267,7 @@ function sanitizeStats(raw: unknown): Record<string, OfferStats> {
   for (const [code, v] of Object.entries(raw).slice(0, 5000)) {
     if (!isObj(v)) continue;
     const n = (k: string) => (typeof v[k] === "number" && Number.isFinite(v[k]) ? Math.max(0, Math.round(v[k] as number)) : 0);
-    out[code.toLowerCase()] = { views: n("views"), orders: n("orders"), revenue: n("revenue") };
+    out[code.toLowerCase()] = { views: n("views"), orders: n("orders"), revenue: n("revenue"), paid: n("paid") };
   }
   return out;
 }

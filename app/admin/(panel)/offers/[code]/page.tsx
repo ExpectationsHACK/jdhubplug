@@ -65,7 +65,7 @@ export default async function EditOfferPage({ params, searchParams }: PageProps<
       <div className="mb-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-4 [&>*]:min-w-0">
           <StatCard label="Views" value={stats.views.toLocaleString("en-NG")} hint="Special link opens" />
-          <StatCard label="Orders" value={stats.orders.toLocaleString("en-NG")} hint={offer.usageLimit ? `of ${offer.usageLimit} allowed` : "No limit"} />
+          <StatCard label="Orders" value={stats.orders.toLocaleString("en-NG")} hint={`${stats.paid} paid, ${Math.max(0, stats.orders - stats.paid)} awaiting payment${offer.usageLimit ? ` · of ${offer.usageLimit} allowed` : ""}`} />
           <StatCard label="Revenue" value={formatNaira(stats.revenue)} />
           <StatCard label="Conversion" value={conv} hint="Orders ÷ views" />
         </div>

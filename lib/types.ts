@@ -185,7 +185,8 @@ export type Offer = {
   updatedAt: string;
 };
 
-export type OfferStats = { views: number; orders: number; revenue: number };
+/** `orders` counts uses held by open orders (unpaid ones release theirs if they expire); `paid` counts paid ones. */
+export type OfferStats = { views: number; orders: number; revenue: number; paid: number };
 
 export type OfferState = "scheduled" | "live" | "expired" | "paused" | "exhausted";
 

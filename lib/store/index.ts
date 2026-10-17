@@ -14,7 +14,7 @@ export { storageStatus };
 //   jd:sold       hash  id -> units sold
 //   jd:orders     hash  id -> Order JSON
 //   jd:offers     hash  code -> Offer JSON
-//   jd:offerstats hash  "{code}:views|orders|revenue" -> number
+//   jd:offerstats hash  "{code}:views|orders|paid|revenue" -> number
 //   jd:leads      hash  id -> Lead JSON
 //   jd:staff      hash  id -> StaffUser JSON
 //   jd:settings   string Settings JSON
@@ -273,17 +273,31 @@ export async function deleteOffer(code: string) {
   const c = normalizeCode(code);
   const d = getDriver();
   await d.hdel(K.offers, [c]);
-  await d.hdel(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`]);
+  await d.hdel(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`, `${c}:paid`]);
 }
 
 export async function bumpOfferStat(code: string, field: keyof OfferStats, by: number) {
   return getDriver().hincrby(K.offerStats, `${normalizeCode(code)}:${field}`, Math.round(by));
 }
 
+/**
+ * Atomically take one use of an offer. With a usage limit, the counter is incremented
+ * first and given back if that went over, so two checkouts at the same moment can't
+ * both take the last use. Returns false when the offer is used up.
+ */
+export async function claimOfferUse(code: string, usageLimit?: number): Promise<boolean> {
+  const n = await bumpOfferStat(code, "orders", 1);
+  if (usageLimit !== undefined && n > usageLimit) {
+    await bumpOfferStat(code, "orders", -1);
+    return false;
+  }
+  return true;
+}
+
 export async function getOfferStats(code: string): Promise<OfferStats> {
   const c = normalizeCode(code);
-  const [views, orders, revenue] = await getDriver().hmget(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`]);
-  return { views: Number(views ?? 0), orders: Number(orders ?? 0), revenue: Number(revenue ?? 0) };
+  const [views, orders, revenue, paid] = await getDriver().hmget(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`, `${c}:paid`]);
+  return { views: Number(views ?? 0), orders: Number(orders ?? 0), revenue: Number(revenue ?? 0), paid: Number(paid ?? 0) };
 }
 
 export async function getAllOfferStats(): Promise<Record<string, OfferStats>> {
@@ -293,7 +307,7 @@ export async function getAllOfferStats(): Promise<Record<string, OfferStats>> {
     const i = k.lastIndexOf(":");
     const code = k.slice(0, i);
     const field = k.slice(i + 1) as keyof OfferStats;
-    out[code] ??= { views: 0, orders: 0, revenue: 0 };
+    out[code] ??= { views: 0, orders: 0, revenue: 0, paid: 0 };
     out[code][field] = Number(v);
   }
   return out;

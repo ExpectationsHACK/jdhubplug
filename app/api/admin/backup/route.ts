@@ -157,8 +157,8 @@ export async function POST(request: Request) {
       await saveOffer(offer);
       const want = backup.offerStats[offer.code];
       if (!want) continue;
-      const have = currentStats[offer.code] ?? { views: 0, orders: 0, revenue: 0 };
-      for (const field of ["views", "orders", "revenue"] as const) {
+      const have = currentStats[offer.code] ?? { views: 0, orders: 0, revenue: 0, paid: 0 };
+      for (const field of ["views", "orders", "revenue", "paid"] as const) {
         const d = want[field] - have[field];
         if (d) await bumpOfferStat(offer.code, field, d);
       }
