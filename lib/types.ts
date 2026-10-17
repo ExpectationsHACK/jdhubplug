@@ -96,6 +96,9 @@ export type OrderLine = {
   spec: string;
   photo?: string;
   imageUrl?: string;
+  /** Fallback illustration, copied from the product so old orders render after it's deleted. */
+  art?: ArtKind;
+  tint?: string;
   qty: number;
   /** Unit price before any offer. */
   unitPrice: number;
@@ -191,9 +194,13 @@ export type OfferState = "scheduled" | "live" | "expired" | "paused" | "exhauste
 /** A shopper account. Passwordless: customers sign in with a one-time code. */
 export type Customer = {
   id: string;
-  /** E.164 phone, e.g. +2348031234567. */
+  /** Verified E.164 phone (signed in with an SMS code), e.g. +2348031234567. */
   phone?: string;
+  /** Verified email (signed in with an email code). */
   email?: string;
+  /** Unverified contact details typed at checkout; only used to prefill the next checkout. */
+  contactPhone?: string;
+  contactEmail?: string;
   name?: string;
   /** Default delivery details, saved from the last order. */
   address?: string;
@@ -274,7 +281,7 @@ export type Settings = {
   requireAccountForCheckout: boolean;
 };
 
-export type StorageKind = "redis" | "file" | "memory";
+export type StorageKind = "supabase" | "redis" | "file" | "memory";
 
 export type StorageStatus = {
   kind: StorageKind;

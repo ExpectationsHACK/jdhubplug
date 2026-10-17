@@ -2,7 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { categories, grades, states, type Listing } from "@/lib/catalog";
+import type { CategorySlug, Product } from "@/lib/types";
+import { GRADES } from "./home/format";
 import { Icon } from "./Icon";
 import { ProductCard } from "./ProductCard";
 
@@ -16,23 +17,37 @@ const priceBands = [
 
 type Sort = "featured" | "price-asc" | "price-desc" | "rating";
 
+export type ShopCategory = { slug: CategorySlug; name: string };
+
+type GridProps = {
+  items: Product[];
+  /** Pass to show the category filter (the all-products page). */
+  categories?: ShopCategory[];
+};
+
+/** Sold-out units always sort after in-stock ones, whatever the chosen order. */
+const stockFirst = (a: Product, b: Product) => Number(b.stock > 0) - Number(a.stock > 0);
+
 const PAGE = 24;
 
-/** Reads `?brand=` so mega-menu brand links land pre-filtered. Must render inside <Suspense>. */
-export function ShopGridFromParams(props: { items: Listing[]; showCategory?: boolean }) {
-  const brand = useSearchParams().get("brand");
-  return <ShopGrid {...props} initialBrand={brand ?? undefined} key={brand ?? ""} />;
+/**
+ * Reads `?brand=` (mega-menu brand links) and `?q=` (header search) so links land
+ * pre-filtered. Must render inside <Suspense>.
+ */
+export function ShopGridFromParams(props: GridProps) {
+  const params = useSearchParams();
+  const brand = params.get("brand") ?? undefined;
+  const q = params.get("q")?.slice(0, 80) ?? undefined;
+  return <ShopGrid {...props} initialBrand={brand} initialQuery={q} key={`${brand}|${q}`} />;
 }
 
 export function ShopGrid({
   items,
-  showCategory,
+  categories,
   initialBrand,
-}: {
-  items: Listing[];
-  showCategory?: boolean;
-  initialBrand?: string;
-}) {
+  initialQuery,
+}: GridProps & { initialBrand?: string; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery?.trim() ?? "");
   const [cat, setCat] = useState<string[]>([]);
   const [brand, setBrand] = useState<string[]>(initialBrand ? [initialBrand] : []);
   const [grade, setGrade] = useState<string[]>([]);
@@ -49,10 +64,13 @@ export function ShopGrid({
   };
 
   const brands = useMemo(() => [...new Set(items.map((i) => i.brand))].sort(), [items]);
+  const states = useMemo(() => [...new Set(items.map((i) => i.state))].sort(), [items]);
 
   const shown = useMemo(() => {
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     const r = items.filter(
       (i) =>
+        (!words.length || words.every((w) => `${i.brand} ${i.name} ${i.spec}`.toLowerCase().includes(w))) &&
         (!cat.length || cat.includes(i.category)) &&
         (!brand.length || brand.includes(i.brand)) &&
         (!grade.length || grade.includes(i.grade)) &&
@@ -64,14 +82,15 @@ export function ShopGrid({
             return i.price >= b.min && i.price < b.max;
           })),
     );
-    if (sort === "price-asc") r.sort((a, b) => a.price - b.price);
-    if (sort === "price-desc") r.sort((a, b) => b.price - a.price);
-    if (sort === "rating") r.sort((a, b) => b.rating - a.rating);
+    if (sort === "price-asc") r.sort((a, b) => stockFirst(a, b) || a.price - b.price);
+    if (sort === "price-desc") r.sort((a, b) => stockFirst(a, b) || b.price - a.price);
+    if (sort === "rating") r.sort((a, b) => stockFirst(a, b) || b.rating - a.rating);
     return r;
-  }, [items, cat, brand, grade, price, state, verifiedOnly, sort]);
+  }, [items, query, cat, brand, grade, price, state, verifiedOnly, sort]);
 
   const active = cat.length + brand.length + grade.length + price.length + state.length + (verifiedOnly ? 1 : 0);
   const reset = () => {
+    setQuery("");
     setCat([]);
     setBrand([]);
     setGrade([]);
@@ -83,7 +102,7 @@ export function ShopGrid({
 
   const filters = (
     <div className="divide-y divide-line">
-      {showCategory && (
+      {categories && (
         <FilterGroup
           title="Category"
           options={categories.map((c) => [c.slug, c.name])}
@@ -92,7 +111,7 @@ export function ShopGrid({
         />
       )}
       <FilterGroup title="Brand" options={brands.map((b) => [b, b])} value={brand} onChange={reset1(setBrand)} />
-      <FilterGroup title="Condition" options={grades.map((g) => [g.id, g.name])} value={grade} onChange={reset1(setGrade)} />
+      <FilterGroup title="Condition" options={GRADES.map((g) => [g.id, g.name])} value={grade} onChange={reset1(setGrade)} />
       <FilterGroup title="Price" options={priceBands.map((p) => [p.id, p.label])} value={price} onChange={reset1(setPrice)} />
       <FilterGroup title="Location" options={states.map((s) => [s, s])} value={state} onChange={reset1(setState)} />
       <div className="py-5">
@@ -125,18 +144,33 @@ export function ShopGrid({
         </div>
       </aside>
 
-      <div>
+      <div className="min-w-0">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <p className="text-[14px] text-ink-2">
-            <span className="font-bold text-ink">{shown.length}</span> results
-          </p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-[14px] text-ink-2">
+            <p aria-live="polite" className="whitespace-nowrap">
+              <span className="font-bold text-ink">{shown.length}</span> results
+            </p>
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setLimit(PAGE);
+                }}
+                className="inline-flex max-w-full items-center gap-1 rounded-full bg-stage px-3 py-1 text-[13px] font-bold text-ink hover:bg-line"
+                aria-label={`Clear search for ${query}`}
+              >
+                <span className="truncate">&ldquo;{query}&rdquo;</span> <Icon name="close" size={14} />
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setPanel(true)} className="btn btn-outline lg:hidden">
               <Icon name="filter" size={18} /> Filters{active ? ` (${active})` : ""}
             </button>
             <label className="flex items-center gap-2 text-[14px]">
               <span className="hidden text-ink-2 sm:inline">Sort by</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="rounded-full border border-line bg-white px-4 py-2 font-bold">
+              <select aria-label="Sort by" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className="rounded-full border border-line bg-white px-4 py-2 font-bold">
                 <option value="featured">Featured</option>
                 <option value="price-asc">Price: low to high</option>
                 <option value="price-desc">Price: high to low</option>
@@ -147,9 +181,9 @@ export function ShopGrid({
         </div>
 
         {shown.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {shown.slice(0, limit).map((l) => (
-              <ProductCard key={l.id} item={l} />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+            {shown.slice(0, limit).map((l, i) => (
+              <ProductCard key={l.id} item={l} index={i % 3} />
             ))}
           </div>
         ) : (
@@ -174,9 +208,9 @@ export function ShopGrid({
       </div>
 
       {panel && (
-        <div className="fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setPanel(false)}>
+        <div className="overlay-in fixed inset-0 z-50 bg-black/40 lg:hidden" onClick={() => setPanel(false)}>
           <div
-            className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-[20px] bg-white px-4 pb-6"
+            className="sheet-up absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-[20px] bg-white px-4 pb-6"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Filters"

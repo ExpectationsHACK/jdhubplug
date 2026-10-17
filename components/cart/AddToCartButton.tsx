@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { productProps, track } from "@/lib/analytics";
 import { Icon } from "../Icon";
 import { toCartProduct, useCart, type CartProduct } from "./CartProvider";
 
@@ -13,27 +14,40 @@ export function AddToCartButton({
   className = "btn btn-primary w-full",
   label = "Add to cart",
   openCart = false,
+  qty = 1,
+  onAdded,
+  flyFrom,
 }: {
   product: CartProduct;
   className?: string;
   label?: string;
   openCart?: boolean;
+  /** Units to add per click (clamped to what's left in stock). */
+  qty?: number;
+  onAdded?: () => void;
+  /** Element the fly-to-cart animation starts from, when the button isn't inside a [data-product-card]. */
+  flyFrom?: () => Element | null | undefined;
 }) {
   const { add, qtyOf, open } = useCart();
   const [added, setAdded] = useState(false);
   const inCart = qtyOf(product.id);
   const soldOut = product.stock <= 0;
-  const maxed = !soldOut && inCart >= product.stock;
+  const left = Math.max(0, product.stock - inCart);
+  const maxed = !soldOut && left <= 0;
+  const units = Math.max(1, Math.min(Math.floor(qty), left || 1));
 
   return (
     <button
       type="button"
       disabled={soldOut || maxed}
+      aria-live="polite"
       onClick={(e) => {
         const card = e.currentTarget.closest("[data-product-card]");
-        const from = card?.querySelector("img") ?? card ?? e.currentTarget;
-        if (add(toCartProduct(product), 1, from)) {
+        const from = card?.querySelector("img") ?? card ?? flyFrom?.() ?? e.currentTarget;
+        if (add(toCartProduct(product), units, from)) {
           setAdded(true);
+          track("product_added_to_cart", { ...productProps(product), quantity: units });
+          onAdded?.();
           setTimeout(() => setAdded(false), 1400);
           if (openCart) setTimeout(open, 950);
         }

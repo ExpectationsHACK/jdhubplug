@@ -1,6 +1,7 @@
 import "server-only";
 
 import { captureServer } from "./analytics-server";
+import { ORDER_FLOW, STATUS_LABEL } from "./order-status";
 import { priceCart, type CartLineInput, type PricedCart } from "./pricing";
 import {
   bumpOfferStat,
@@ -24,27 +25,7 @@ import type { DeliveryMethod, Order, OrderStatus, PaymentMethod } from "./types"
 //   transitionOrder restores stock exactly once when an order is cancelled/refunded
 //   sweepExpiredOrders cancels unpaid orders whose reservation window has passed
 
-export const ORDER_FLOW: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["processing", "shipped", "refunded"],
-  processing: ["shipped", "refunded"],
-  shipped: ["delivered", "refunded"],
-  delivered: ["completed", "refunded"],
-  completed: ["refunded"],
-  cancelled: [],
-  refunded: [],
-};
-
-export const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Awaiting payment",
-  paid: "Paid (in escrow)",
-  processing: "Processing",
-  shipped: "Shipped / ready at hub",
-  delivered: "Delivered",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  refunded: "Refunded",
-};
+export { ORDER_FLOW, STATUS_LABEL };
 
 const RESTOCK_ON: OrderStatus[] = ["cancelled", "refunded"];
 
@@ -128,6 +109,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       spec: l.product.spec,
       photo: l.product.photo,
       imageUrl: l.product.imageUrl,
+      art: l.product.art,
+      tint: l.product.tint,
       qty: l.qty,
       unitPrice: l.unitPrice,
       finalUnitPrice: l.finalUnitPrice,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { safePath } from "@/lib/safe-path";
 import { Suspense } from "react";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { customerSignInAvailable, otpChannels } from "@/lib/otp";
@@ -30,7 +31,7 @@ export default function SignInPage({ searchParams }: PageProps<"/signin">) {
 async function SignInBody({ next }: { next: Promise<string> }) {
   await connection();
   const target = await next;
-  if (await getCurrentCustomer()) redirect(target.startsWith("/") && !target.startsWith("//") ? target : "/account");
+  if (await getCurrentCustomer()) redirect(safePath(target, "/account"));
   if (!customerSignInAvailable()) {
     return <p className="text-[14px] text-ink-2">Sign-in is being set up. You can still contact us on WhatsApp to order.</p>;
   }

@@ -2,13 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { requestCode, signOutCustomer, verifyCode } from "@/lib/customer-auth";
+import { safePath } from "@/lib/safe-path";
 
 export type CodeState =
   | { step: "identify"; error?: string }
   | { step: "verify"; identifier: string; display: string; channel: "sms" | "email"; devCode?: string; error?: string; resent?: boolean };
 
 /** Only allow same-site relative redirects after sign-in. */
-const safeNext = (next: string) => (next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/admin") ? next : "/account");
+const safeNext = (next: string) => safePath(next, "/account");
 
 export async function sendCodeAction(identifier: string): Promise<CodeState> {
   const res = await requestCode(identifier);
