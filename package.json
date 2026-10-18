@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test:orders": "tsx --conditions=react-server scripts/test-orders.mts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:notify": "tsx --conditions=react-server scripts/test-notify.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",
