@@ -40,8 +40,8 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <Footer contact={{ whatsapp: settings.whatsapp, phone: settings.phone, email: settings.email, storeName: settings.storeName }} />
-      <WhatsAppFab whatsapp={settings.whatsapp} storeName={settings.storeName} />
       <Suspense fallback={null}>
+        <WhatsAppFab whatsapp={settings.whatsapp} storeName={settings.storeName} />
         <CompareTray />
       </Suspense>
       <CartDrawer />

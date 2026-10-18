@@ -1,6 +1,7 @@
 // Review types and pure helpers. Isomorphic: safe for client components, the server
 // and scripts. Storage and eligibility live in lib/reviews.ts (server only).
 
+import { configuredOrigin } from "@/components/home/site";
 import type { Order, OrderStatus, RatingSummary } from "./types";
 
 export type { RatingSummary };
@@ -131,7 +132,7 @@ export function reviewPathFor(order: Pick<Order, "id" | "token">, productId?: st
  * Absolute "Rate your purchase" link for an order, for the delivered email/SMS.
  * Only meaningful once the order is delivered or completed (see isReviewable).
  */
-export function reviewLinkFor(order: Pick<Order, "id" | "token">, origin = process.env.NEXT_PUBLIC_SITE_URL || "https://jdhub.ng") {
+export function reviewLinkFor(order: Pick<Order, "id" | "token">, origin = configuredOrigin() ?? "http://localhost:3000") {
   return `${origin.replace(/\/+$/, "")}${reviewPathFor(order)}`;
 }
 

@@ -28,7 +28,8 @@ const secret = () => {
 /** Public site URL: NEXT_PUBLIC_SITE_URL, else the origin of the current request. */
 export function siteUrl(requestOrigin?: string | null) {
   const env = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  return (env || requestOrigin || "http://localhost:3000").replace(/\/+$/, "");
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  return (env || requestOrigin || (vercel ? `https://${vercel}` : "") || "http://localhost:3000").replace(/\/+$/, "");
 }
 
 /** Origin of the current request from its headers (for Server Actions). */
