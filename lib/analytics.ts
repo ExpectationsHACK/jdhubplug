@@ -1,9 +1,11 @@
 "use client";
 
 import posthog from "posthog-js";
+import { analyticsAllowed } from "./consent";
 
 // Product analytics events (PostHog). Keep event names stable: dashboards and funnels
-// depend on them. Every call is a no-op until NEXT_PUBLIC_POSTHOG_KEY is set.
+// depend on them. Every call is a no-op until NEXT_PUBLIC_POSTHOG_KEY is set and the
+// visitor has accepted analytics in the cookie banner (lib/consent.ts).
 //
 // Funnel: product_viewed → product_added_to_cart → checkout_started → order_placed (server)
 //         → order_paid (server).
@@ -30,7 +32,7 @@ export type AnalyticsEvent =
   | "compare_viewed"
   | "stock_alert_requested";
 
-const enabled = () => typeof window !== "undefined" && !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const enabled = () => typeof window !== "undefined" && analyticsAllowed();
 
 export function track(event: AnalyticsEvent, properties?: Record<string, unknown>) {
   if (!enabled()) return;
@@ -54,13 +56,19 @@ export function identify(customerId: string) {
 export function resetIdentity() {
   if (!enabled()) return;
   try {
+    // reset() also clears PostHog's consent state, so re-apply the visitor's choice after it.
+    const optedIn = posthog.has_opted_in_capturing();
     posthog.reset();
+    if (optedIn) posthog.opt_in_capturing({ captureEventName: false });
   } catch {
     /* ignore */
   }
 }
 
-/** The visitor's PostHog id, passed to the server so order events join their journey. */
+/**
+ * The visitor's PostHog id, passed to the server so order events join their journey.
+ * Undefined without analytics consent: the server then sends no events for the order.
+ */
 export function analyticsId(): string | undefined {
   if (!enabled()) return undefined;
   try {

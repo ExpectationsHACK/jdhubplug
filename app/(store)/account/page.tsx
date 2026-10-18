@@ -7,11 +7,12 @@ import { Icon } from "@/components/Icon";
 import { ProductImage } from "@/components/ProductImage";
 import { formatNaira } from "@/lib/reference";
 import { getCurrentCustomer } from "@/lib/customer-auth";
+import { customerOrders, getLegalContent } from "@/lib/legal-store";
 import { STATUS_LABEL } from "@/lib/order-status";
 import { isReviewable, reviewKeyFor, reviewPathFor, reviewsForLines } from "@/lib/reviews";
 import { listOrders } from "@/lib/store";
-import type { Customer, Order } from "@/lib/types";
 import { signOutAction } from "../signin/actions";
+import { PrivacyControls } from "./PrivacyControls";
 
 export const metadata: Metadata = {
   title: "Your account",
@@ -19,17 +20,41 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function AccountPage() {
+export default function AccountPage({ searchParams }: PageProps<"/account">) {
   return (
     <Suspense fallback={<div className="wrap py-16"><div className="mx-auto h-64 max-w-3xl animate-pulse rounded-tile bg-stage" /></div>}>
-      <AccountBody />
+      <AccountBody request={searchParams.then((s) => (typeof s.request === "string" ? s.request : undefined))} />
     </Suspense>
   );
 }
 
-async function AccountBody() {
+async function AccountBody({ request }: { request: Promise<string | undefined> }) {
   await connection();
-  const customer = await getCurrentCustomer();
+  const [customer, requestId, legal] = await Promise.all([getCurrentCustomer(), request, getLegalContent()]);
+  if (!customer && requestId && /^DSR-\d+$/.test(requestId)) {
+    return (
+      <section className="wrap max-w-md py-16 text-center">
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-stage">
+          <Icon name="user" size={30} />
+        </span>
+        <h1 className="display mt-6 text-[32px]">Deletion request received</h1>
+        <p className="mt-2 text-ink-2">
+          Your reference is <b>{requestId}</b>. You&apos;ve been signed out, and we&apos;ll remove your personal details within 30 days. Order records are kept
+          for tax purposes without your contact details.
+        </p>
+        <p className="mt-4 text-[14px] text-ink-2">
+          Changed your mind or have a question? Email{" "}
+          <a href={`mailto:${legal.privacyEmail}`} className="font-bold text-accent underline underline-offset-2">
+            {legal.privacyEmail}
+          </a>
+          .
+        </p>
+        <Link href="/" className="btn btn-primary btn-lg mt-8 w-full">
+          Back to JDHub
+        </Link>
+      </section>
+    );
+  }
   if (!customer) {
     return (
       <>
@@ -43,7 +68,7 @@ async function AccountBody() {
       </>
     );
   }
-  const orders = ordersFor(customer, await listOrders());
+  const orders = customerOrders(customer, await listOrders());
   // Delivered lines the buyer hasn't reviewed yet.
   const delivered = orders.filter((o) => isReviewable(o.status)).flatMap((o) => o.lines.map((l) => ({ order: o, line: l })));
   const written = await reviewsForLines(delivered.map((d) => ({ orderId: d.order.id, productId: d.line.productId })));
@@ -122,17 +147,10 @@ async function AccountBody() {
           ))}
         </ul>
       )}
-    </section>
-  );
-}
 
-/** Orders placed while signed in, plus earlier guest orders made with the same verified phone/email. */
-function ordersFor(c: Customer, all: Order[]) {
-  const last10 = (s?: string) => (s ?? "").replace(/\D/g, "").slice(-10);
-  return all.filter(
-    (o) =>
-      o.customerId === c.id ||
-      (!!c.phone && last10(o.customer.phone) === last10(c.phone)) ||
-      (!!c.email && !!o.customer.email && o.customer.email.toLowerCase() === c.email),
+      <div className="max-w-xl">
+        <PrivacyControls privacyEmail={legal.privacyEmail} whatsapp={legal.whatsapp} />
+      </div>
+    </section>
   );
 }

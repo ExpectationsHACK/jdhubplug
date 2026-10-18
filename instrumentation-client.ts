@@ -1,11 +1,13 @@
 // Browser instrumentation: runs before the app becomes interactive.
 //   Sentry  — error tracking (NEXT_PUBLIC_SENTRY_DSN)
 //   PostHog — product analytics (NEXT_PUBLIC_POSTHOG_KEY), proxied through /ingest so
-//             ad blockers don't drop events.
+//             ad blockers don't drop events. Starts opted out: nothing is captured or
+//             stored until the visitor accepts analytics (lib/consent.ts, ConsentBanner).
 // Both stay off until their keys are set.
 
 import * as Sentry from "@sentry/nextjs";
 import posthog from "posthog-js";
+import { syncAnalyticsWithConsent } from "./lib/consent";
 import { scrubEvent } from "./lib/sentry-scrub";
 
 const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -30,6 +32,10 @@ if (posthogKey) {
       defaults: "2026-08-30",
       person_profiles: "identified_only",
       respect_dnt: true,
+      // NDPA consent: no capturing and no PostHog cookies/storage until opt-in.
+      opt_out_capturing_by_default: true,
+      opt_out_persistence_by_default: true,
+      loaded: () => syncAnalyticsWithConsent(),
       // Admin screens are internal: don't track them or record them.
       before_send: (event) => (event && typeof window !== "undefined" && window.location.pathname.startsWith("/admin") ? null : event),
     });

@@ -16,6 +16,7 @@ export const TAGS = {
   settings: "settings",
   offers: "offers",
   reviews: "reviews",
+  legal: "legal",
 } as const;
 
 /**

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { waLink } from "@/lib/settings";
+import { CookieSettingsButton } from "./consent/ConsentBanner";
 import { Icon, WhatsAppGlyph } from "./Icon";
 import { Logo } from "./Logo";
 
@@ -48,7 +49,7 @@ const columns: { title: string; links: [string, string][] }[] = [
     links: [
       ["Chat on WhatsApp", "/trust#contact"],
       ["Order tracking", "/track"],
-      ["Warranty", "/trust#escrow"],
+      ["Returns & warranty", "/returns"],
       ["Contact us", "/trust#contact"],
     ],
   },
@@ -114,8 +115,11 @@ export function Footer({ contact }: { contact: FooterContact }) {
             </span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <Link href="/trust" className="hover:underline">Privacy</Link>
-            <Link href="/trust" className="hover:underline">Terms of use</Link>
+            <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+            <Link href="/terms" className="hover:underline">Terms of use</Link>
+            <Link href="/returns" className="hover:underline">Returns & warranty</Link>
+            <Link href="/cookies" className="hover:underline">Cookie Policy</Link>
+            <CookieSettingsButton />
             <Link href="/trust#escrow" className="hover:underline">Escrow terms</Link>
             <Link href="/credits" className="hover:underline">Photo credits</Link>
           </div>

@@ -35,7 +35,10 @@ export type PlaceOrderInput = {
   items: CartLineInput[];
   /** Signed-in customer placing the order (from getCustomer(), never from the client). */
   customerId?: string;
-  /** PostHog distinct id from the browser, so server-side order events join the visitor's journey. */
+  /**
+   * PostHog distinct id from the browser, so server-side order events join the visitor's journey.
+   * Only present when the visitor consented to analytics; without it no events are sent.
+   */
   analyticsId?: string;
   offerCode?: string;
   customer: Order["customer"];
@@ -109,6 +112,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const order: Order = {
     id: await nextOrderId(),
     customerId: input.customerId,
+    analyticsId: input.analyticsId?.slice(0, 200) || undefined,
     token: crypto.randomUUID().replace(/-/g, ""),
     createdAt,
     updatedAt: createdAt,
@@ -150,7 +154,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
 
   if (order.offerCode) await bumpOfferStat(order.offerCode, "revenue", order.total).catch(() => undefined);
 
-  captureServer("order_placed", input.analyticsId || input.customerId || order.id, {
+  captureServer("order_placed", order.analyticsId, {
     order_id: order.id,
     revenue: order.total,
     subtotal: order.subtotal,
@@ -222,7 +226,7 @@ async function transitionLocked(
       ]).catch(() => undefined);
     }
     await logAudit({ by, action: `order.${next}`, target: order.id, detail: "Stock restored" }).catch(() => undefined);
-    captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.customerId || order.id, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
+    captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.analyticsId, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
     notifyOrderTransition(updated, order.status);
     return updated;
   }
@@ -231,7 +235,7 @@ async function transitionLocked(
   if (next === "paid" && order.offerCode && !order.payment.paidAt) await bumpOfferStat(order.offerCode, "paid", 1).catch(() => undefined);
   await logAudit({ by, action: `order.${next}`, target: order.id, detail: opts.note }).catch(() => undefined);
   if (next === "paid" || next === "completed") {
-    captureServer(next === "paid" ? "order_paid" : "order_completed", order.customerId || order.id, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
+    captureServer(next === "paid" ? "order_paid" : "order_completed", order.analyticsId, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
   }
   // Only reached on a real status change (the no-op case returned above), so each transition notifies once.
   notifyOrderTransition(saved, order.status);
