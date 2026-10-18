@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useId } from "react";
 import { track } from "@/lib/analytics";
 import { submitLead, type LeadState } from "@/app/(store)/lead-actions";
@@ -43,6 +44,14 @@ export function LeadForm({
         <div className={dark ? "text-white" : "text-ink"}>
           <p className="font-bold">{successTitle}</p>
           <p className={`text-[14px] ${dark ? "text-white/75" : "text-ink-2"}`}>{successBody}</p>
+          {state.statusUrl && (
+            <>
+              <Link href={state.statusUrl} className={`btn mt-3 min-h-10 px-5 py-2 text-[14px] ${dark ? "btn-white" : "btn-primary"}`}>
+                Track your trade-in <Icon name="arrowRight" size={16} />
+              </Link>
+              <p className={`mt-2 text-[12px] ${dark ? "text-white/60" : "text-muted"}`}>Bookmark this link: it shows your inspection booking, final offer and payout.</p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -92,6 +101,23 @@ export function LeadForm({
           />
         </div>
       </div>
+      {(type === "sell" || type === "swap") && (
+        <div>
+          <label htmlFor={`${id}-email`} className="sr-only">
+            Email for offer updates (optional)
+          </label>
+          <input
+            id={`${id}-email`}
+            name="email"
+            type="email"
+            maxLength={120}
+            defaultValue={state.values?.email}
+            placeholder="Email for offer updates (optional)"
+            autoComplete="email"
+            className={field}
+          />
+        </div>
+      )}
       <label htmlFor={`${id}-msg`} className="sr-only">
         {messageLabel}
       </label>

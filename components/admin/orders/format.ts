@@ -2,6 +2,7 @@
 // requests screens. Isomorphic and pure (no store access), so client components and
 // the CSV route can share them.
 
+import { STAGE_LABEL } from "@/lib/tradein-flow";
 import type { Lead, LeadType, Order, OrderStatus, PaymentMethod } from "@/lib/types";
 
 const naira = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 });
@@ -247,11 +248,8 @@ export const LEAD_TYPE_LABEL: Record<LeadType, string> = {
   vendor: "Vendor",
 };
 
-export const LEAD_STATUS_LABEL: Record<Lead["status"], string> = {
-  new: "New",
-  contacted: "Contacted",
-  closed: "Closed",
-};
+/** Every lead status, including the sell / swap pipeline stages (see lib/tradein-flow.ts). */
+export const LEAD_STATUS_LABEL: Record<Lead["status"], string> = STAGE_LABEL;
 
 /** Turn a camelCase / snake_case detail key into a readable label. */
 export const humanizeKey = (k: string) =>

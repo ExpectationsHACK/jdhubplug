@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:notify": "tsx --conditions=react-server scripts/test-notify.mts",
     "test:reviews": "tsx --conditions=react-server scripts/test-reviews.mts",
-    "test:extras": "tsx --conditions=react-server scripts/test-extras.mts"
+    "test:extras": "tsx --conditions=react-server scripts/test-extras.mts",
+    "test:tradein": "tsx --conditions=react-server scripts/test-tradein.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",

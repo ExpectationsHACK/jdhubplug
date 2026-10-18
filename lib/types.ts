@@ -232,6 +232,117 @@ export type OtpChannel = "sms" | "email";
 
 export type LeadType = "sell" | "swap" | "contact" | "vendor";
 
+/**
+ * Lead status. Contact and vendor requests only use new / contacted / closed (the
+ * original three, so leads stored before the trade-in pipeline still parse). Sell and
+ * swap requests move through the whole trade-in pipeline (lib/tradein-flow.ts).
+ */
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "inspection_booked"
+  | "inspected"
+  | "offer_sent"
+  | "accepted" // by the customer
+  | "declined" // by the customer
+  | "paid"
+  | "closed"
+  | "cancelled";
+
+/** One step on a lead's timeline. `from === to` for notes and message attempts. */
+export type LeadEvent = {
+  at: string;
+  by: string;
+  from: LeadStatus;
+  to: LeadStatus;
+  note?: string;
+  kind?: "status" | "note" | "message";
+};
+
+export type InspectionMethod = "pickup" | "dropoff";
+
+export type InspectionBooking = {
+  /** Slot start (ISO). */
+  at: string;
+  method: InspectionMethod;
+  /** Pickup address (method "pickup"). */
+  address?: string;
+  /** Hub city from settings.hubs (method "dropoff"). */
+  hub?: string;
+  /** Staff member doing the inspection. */
+  staff?: string;
+  bookedAt: string;
+  bookedBy: string;
+};
+
+export type ConditionCheck = "ok" | "minor" | "damaged";
+
+export type InspectionChecklist = {
+  imeiClean: boolean;
+  /** Signed out of iCloud / Google (activation lock off). */
+  accountSignedOut: boolean;
+  screen: ConditionCheck;
+  /** Battery health in percent, when the device reports it. */
+  batteryHealth?: number;
+  body: ConditionCheck;
+  /** Buttons, cameras, speakers, Face ID / fingerprint, charging. */
+  functions: "ok" | "issues";
+};
+
+export type InspectionResult = {
+  grade: Grade;
+  checklist: InspectionChecklist;
+  finalOffer: number;
+  notes?: string;
+  inspectedAt: string;
+  inspectedBy: string;
+};
+
+export type PayoutMethod = "bank" | "cash" | "swap_credit";
+
+/** Bank details as stored on the lead: the account number is masked. The full number
+ * lives in a separate admin-only key (see lib/tradein.ts). */
+export type PayoutBank = { bankName: string; accountName: string; accountMasked: string };
+
+export type TradeInPayout = {
+  method: PayoutMethod;
+  amount: number;
+  bank?: PayoutBank;
+  /** Transfer reference, receipt number, or the swap credit code / order id. */
+  reference?: string;
+  paidAt: string;
+  paidBy: string;
+};
+
+export type SwapCredit = {
+  /** Offer code (single use, fixed amount). */
+  code: string;
+  amount: number;
+  expiresAt: string;
+  issuedAt: string;
+  /** Set once an order used the code. */
+  redeemedAt?: string;
+  orderId?: string;
+};
+
+/** Trade-in pipeline data for sell / swap leads. Every field is optional so old leads parse. */
+export type TradeIn = {
+  /** Instant estimate from the sell / swap tool. */
+  estimate?: number;
+  /** The instant estimate is honoured until this time (7 days from the request). */
+  estimateLockedUntil?: string;
+  booking?: InspectionBooking;
+  inspection?: InspectionResult;
+  offerSentAt?: string;
+  response?: { decision: "accepted" | "declined"; at: string; by: string; reason?: string };
+  /** How the customer wants to be paid (chosen on accept). */
+  payoutChoice?: { method: PayoutMethod; bank?: PayoutBank };
+  payout?: TradeInPayout;
+  credit?: SwapCredit;
+  /** Why the lead was closed or cancelled. */
+  closeReason?: string;
+};
+
 export type Lead = {
   id: string;
   type: LeadType;
@@ -241,7 +352,11 @@ export type Lead = {
   message: string;
   /** Structured details, e.g. model/storage/grade/estimate for sell requests. */
   details?: Record<string, string>;
-  status: "new" | "contacted" | "closed";
+  status: LeadStatus;
+  /** Secret for the customer status page (/trade-in/{id}?t=…). Old leads get one lazily. */
+  token?: string;
+  trade?: TradeIn;
+  history?: LeadEvent[];
   createdAt: string;
   updatedAt: string;
 };
