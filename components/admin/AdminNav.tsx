@@ -17,6 +17,7 @@ export const ADMIN_NAV: { href: string; label: string; icon: AdminIconName; grou
   { href: "/admin/products", label: "Products", icon: "box", group: "Catalog" },
   { href: "/admin/inventory", label: "Inventory", icon: "layers", group: "Catalog" },
   { href: "/admin/offers", label: "Offers & links", icon: "link", group: "Catalog" },
+  { href: "/admin/alerts", label: "Stock alerts", icon: "bell", group: "Catalog" },
   { href: "/admin/orders", label: "Orders", icon: "receipt", group: "Sales" },
   { href: "/admin/customers", label: "Customers", icon: "users", group: "Sales" },
   { href: "/admin/requests", label: "Requests", icon: "inbox", group: "Sales" },

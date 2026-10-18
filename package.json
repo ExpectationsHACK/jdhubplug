@@ -11,7 +11,8 @@
     "test:orders": "tsx --conditions=react-server scripts/test-orders.mts",
     "test:e2e": "playwright test",
     "test:notify": "tsx --conditions=react-server scripts/test-notify.mts",
-    "test:reviews": "tsx --conditions=react-server scripts/test-reviews.mts"
+    "test:reviews": "tsx --conditions=react-server scripts/test-reviews.mts",
+    "test:extras": "tsx --conditions=react-server scripts/test-extras.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",

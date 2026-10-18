@@ -8,6 +8,7 @@ import { formatNaira } from "./home/format";
 import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 import { CartButton } from "./cart/CartButton";
+import { WishlistHeaderButton } from "./wishlist/WishlistButton";
 import { Logo } from "./Logo";
 
 const utilityNav = [
@@ -127,6 +128,7 @@ export function Header({
             <button aria-label="Search" onClick={() => setSearch(true)} className="icon-btn rounded-full p-2 hover:bg-stage">
               <Icon name="search" />
             </button>
+            <WishlistHeaderButton />
             <CartButton />
             <Link href="/account" aria-label="Your account" className="icon-btn hidden rounded-full p-2 hover:bg-stage sm:block">
               <Icon name="user" />
@@ -377,7 +379,7 @@ function Drawer({ categories, onClose }: { categories: NavCategory[]; onClose: (
                 ))}
               </ul>
               <ul className="py-2">
-                {[...utilityNav, { href: "/vendors", label: "Sell on JDHub" }, { href: "/account", label: "Your account" }].map((n) => (
+                {[...utilityNav, { href: "/vendors", label: "Sell on JDHub" }, { href: "/wishlist", label: "Wishlist" }, { href: "/account", label: "Your account" }].map((n) => (
                   <li key={n.href}>
                     <Link href={n.href} onClick={onClose} className="block py-3 text-[15px] font-bold text-ink-2">
                       {n.label}

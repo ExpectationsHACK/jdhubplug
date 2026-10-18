@@ -9,6 +9,8 @@ import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 import { RatingInline } from "./reviews/Stars";
 import { badgeOf, sellerOf } from "@/lib/seller";
+import { CompareToggle } from "./compare/CompareToggle";
+import { WishlistButton } from "./wishlist/WishlistButton";
 
 export function GradePill({ grade }: { grade: Product["grade"] }) {
   return (
@@ -50,9 +52,7 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
           ) : (
             <span />
           )}
-          <button type="button" aria-label={`Save ${item.name}`} className="rounded-full p-1 text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
-            <Icon name="heart" size={20} />
-          </button>
+          <WishlistButton product={item} className="p-1" />
         </div>
         <Link
           href={`/product/${item.id}`}
@@ -105,6 +105,7 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
           </p>
           <OfferPrice product={item} className="text-[13px]" />
           <AddToCartButton product={item} className="btn btn-primary mt-3 w-full px-3 sm:mt-4" />
+          <CompareToggle product={item} className="mt-2.5" />
         </div>
       </Tilt>
     </div>

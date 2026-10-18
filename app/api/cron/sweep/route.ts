@@ -1,10 +1,12 @@
 import { TAGS } from "@/lib/data";
 import { sweepExpiredOrders } from "@/lib/orders";
 import { refreshFromRoute } from "@/lib/revalidate";
+import { processStockAlerts } from "@/lib/stock-alerts";
 import { logAudit } from "@/lib/store";
 
 // Daily clean-up (vercel.json → crons). Cancels unpaid orders whose reservation window
-// has passed, which puts their stock back on sale, then refreshes the storefront.
+// has passed, which puts their stock back on sale, then refreshes the storefront and
+// sends any back-in-stock alerts that are now due (a safety net for missed triggers).
 // When CRON_SECRET is set, Vercel Cron sends it as a Bearer token and nothing else may call this.
 
 const enc = new TextEncoder();
@@ -32,5 +34,12 @@ export async function GET(request: Request) {
   if (released > 0) {
     await logAudit({ by: "Cron", action: "cron.sweep", detail: `${released} expired order${released === 1 ? "" : "s"} released` }).catch(() => undefined);
   }
-  return Response.json({ released, at: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
+  const alerts = await processStockAlerts().catch((e) => {
+    console.error("[cron] stock alerts failed", e);
+    return null;
+  });
+  if (alerts && (alerts.sent || alerts.skipped || alerts.failed)) {
+    await logAudit({ by: "Cron", action: "cron.stock-alerts", detail: `${alerts.sent} sent, ${alerts.skipped} not delivered, ${alerts.failed} failed` }).catch(() => undefined);
+  }
+  return Response.json({ released, alerts, at: new Date().toISOString() }, { headers: { "Cache-Control": "no-store" } });
 }

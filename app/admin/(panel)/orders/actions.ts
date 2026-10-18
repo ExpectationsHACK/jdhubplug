@@ -6,6 +6,7 @@ import { audit, requireAdmin, ROLE_LABEL } from "@/lib/auth";
 import { TAGS } from "@/lib/data";
 import { addOrderNote, ORDER_FLOW, STATUS_LABEL, transitionOrder } from "@/lib/orders";
 import { refreshFromAction } from "@/lib/revalidate";
+import { queueStockAlerts } from "@/lib/stock-alerts";
 import type { Session } from "@/lib/session";
 import { getOrder } from "@/lib/store";
 import type { OrderStatus } from "@/lib/types";
@@ -74,6 +75,7 @@ export async function transitionOrderAction(_prev: OrderActionState, form: FormD
     // transitionOrder writes the history entry and the activity-log entry (as `by`).
     await transitionOrder(id, next, actor(s), { note: parts.join(" · ") || undefined, paymentReference: reference });
     refreshFromAction(TAGS.catalog, TAGS.offers);
+    if (next === "cancelled" || next === "refunded") queueStockAlerts();
     return { ok: true, message: SUCCESS[next] ?? "Order updated.", at: Date.now() };
   } catch (e) {
     return friendly(e, "Couldn't update the order. Try again.");

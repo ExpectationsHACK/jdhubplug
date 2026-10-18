@@ -5,6 +5,7 @@ import { audit, can, getSession } from "@/lib/auth";
 import { CsvError, parseCsv } from "@/lib/csv";
 import { TAGS } from "@/lib/data";
 import { refreshFromRoute } from "@/lib/revalidate";
+import { queueStockAlerts } from "@/lib/stock-alerts";
 import { listProducts, newProductId, saveProducts, withLock } from "@/lib/store";
 import { jsonError, sameOrigin } from "../_lib/http";
 
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
         }
         await audit(s, "product.import", ids.length <= 300 ? ids.join(",") : `csv (${ids.length} products)`, detail);
         refreshFromRoute(TAGS.catalog);
+        queueStockAlerts();
       }
       return json({ ...summary, applied });
     });
