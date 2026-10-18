@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import { sellerOf } from "@/lib/seller";
 import type { CategorySlug, Product } from "@/lib/types";
 import { GRADES } from "./home/format";
 import { Icon } from "./Icon";
@@ -29,6 +30,13 @@ type GridProps = {
 const stockFirst = (a: Product, b: Product) => Number(b.stock > 0) - Number(a.stock > 0);
 
 const PAGE = 24;
+
+/**
+ * Real review scores only (Product.ratingSummary). Unrated items sort after rated ones;
+ * among rated items a higher average wins, then more reviews.
+ */
+const byRating = (a: Product, b: Product) =>
+  (b.ratingSummary?.average ?? -1) - (a.ratingSummary?.average ?? -1) || (b.ratingSummary?.count ?? 0) - (a.ratingSummary?.count ?? 0);
 
 /**
  * Reads `?brand=` (mega-menu brand links) and `?q=` (header search) so links land
@@ -65,6 +73,7 @@ export function ShopGrid({
 
   const brands = useMemo(() => [...new Set(items.map((i) => i.brand))].sort(), [items]);
   const states = useMemo(() => [...new Set(items.map((i) => i.state))].sort(), [items]);
+  const anyRated = useMemo(() => items.some((i) => (i.ratingSummary?.count ?? 0) > 0), [items]);
 
   const shown = useMemo(() => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -75,7 +84,7 @@ export function ShopGrid({
         (!brand.length || brand.includes(i.brand)) &&
         (!grade.length || grade.includes(i.grade)) &&
         (!state.length || state.includes(i.state)) &&
-        (!verifiedOnly || i.verified) &&
+        (!verifiedOnly || sellerOf(i).verified) &&
         (!price.length ||
           price.some((p) => {
             const b = priceBands.find((x) => x.id === p)!;
@@ -84,7 +93,7 @@ export function ShopGrid({
     );
     if (sort === "price-asc") r.sort((a, b) => stockFirst(a, b) || a.price - b.price);
     if (sort === "price-desc") r.sort((a, b) => stockFirst(a, b) || b.price - a.price);
-    if (sort === "rating") r.sort((a, b) => stockFirst(a, b) || b.rating - a.rating);
+    if (sort === "rating") r.sort((a, b) => stockFirst(a, b) || byRating(a, b));
     return r;
   }, [items, query, cat, brand, grade, price, state, verifiedOnly, sort]);
 
@@ -174,7 +183,7 @@ export function ShopGrid({
                 <option value="featured">Featured</option>
                 <option value="price-asc">Price: low to high</option>
                 <option value="price-desc">Price: high to low</option>
-                <option value="rating">Top rated</option>
+                {(anyRated || sort === "rating") && <option value="rating">Top rated</option>}
               </select>
             </label>
           </div>

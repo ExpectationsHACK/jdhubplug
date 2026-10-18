@@ -7,6 +7,8 @@ import { formatNaira, gradeLabel } from "./home/format";
 import { Tilt } from "./motion/Tilt";
 import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
+import { RatingInline } from "./reviews/Stars";
+import { badgeOf, sellerOf } from "@/lib/seller";
 
 export function GradePill({ grade }: { grade: Product["grade"] }) {
   return (
@@ -26,6 +28,8 @@ export const productTransitionName = (id: string) => `product-${id}`;
  */
 export function ProductCard({ item, index = 0 }: { item: Product; index?: number }) {
   const soldOut = item.stock <= 0;
+  const badge = badgeOf(item);
+  const seller = sellerOf(item);
   return (
     <div className="reveal h-full" style={{ "--i": index % 4 } as CSSProperties}>
       <Tilt
@@ -35,13 +39,13 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
         <div className="relative z-[1] flex min-h-6 items-start justify-between">
           {soldOut ? (
             <span className="rounded-full bg-ink px-2.5 py-1 text-[11px] font-bold text-white">Sold out</span>
-          ) : item.badge ? (
+          ) : badge ? (
             <span
               className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                item.badge === "Hot deal" ? "bg-sale text-white" : "bg-white text-ink"
+                badge === "Hot deal" ? "bg-sale text-white" : "bg-white text-ink"
               }`}
             >
-              {item.badge}
+              {badge}
             </span>
           ) : (
             <span />
@@ -75,7 +79,7 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
         <div className="relative z-[1] mt-auto text-center">
           <div className="mb-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
             <GradePill grade={item.grade} />
-            {item.verified && (
+            {seller.verified && (
               <span className="inline-flex items-center gap-0.5 text-[12px] font-bold text-accent">
                 <Icon name="verified" size={15} /> Verified
               </span>
@@ -86,9 +90,9 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
             <p className="mt-1 line-clamp-1 text-[12px] text-muted sm:text-[13px]">{item.spec}</p>
           </Link>
           <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1 text-[11px] text-muted sm:text-[12px]">
-            {item.reviews > 0 && (
+            {item.ratingSummary && (
               <>
-                <Icon name="star" size={13} className="fill-ink text-ink" /> {item.rating} ({item.reviews}) ·
+                <RatingInline summary={item.ratingSummary} size={12} /> ·
               </>
             )}{" "}
             {item.state}

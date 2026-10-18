@@ -12,8 +12,10 @@ import { Reveal } from "@/components/motion/Reveal";
 import { Breadcrumbs } from "@/components/PageHero";
 import { ProductCard, productTransitionName } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
+import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { getCategory, gradeName } from "@/lib/reference";
-import { getCatalog, getCatalogProduct, getStoreSettings } from "@/lib/data";
+import { getCatalog, getCatalogProduct, getModelReviews, getStoreSettings } from "@/lib/data";
+import { sellerOf } from "@/lib/seller";
 import { photoPage, productImageSrc } from "@/lib/photos";
 
 
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/product/[id]">): 
   const item = await getCatalogProduct((await params).id);
   if (!item) return { title: "Product not found" };
   const image = productImageSrc(item, 1280);
-  const description = `${item.name}, ${item.spec}. Graded ${gradeName(item.grade)}, ${item.verified ? "verified seller, " : ""}escrow-protected. Ships from ${item.state}.`;
+  const description = `${item.name}, ${item.spec}. Graded ${gradeName(item.grade)}, ${sellerOf(item).verified ? "verified seller, " : ""}escrow-protected. Ships from ${item.state}.`;
   return {
     title: `${item.name} (${item.spec})`,
     description,
@@ -47,6 +49,10 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
   const [item, all, settings] = await Promise.all([getCatalogProduct((await params).id), getCatalog(), getStoreSettings()]);
   if (!item) notFound();
   const cat = getCategory(item.category)!;
+  const seller = sellerOf(item);
+  // Real published reviews only; with none, no rating appears anywhere (including JSON-LD).
+  const reviews = await getModelReviews(item.model);
+  const rated = reviews.summary && reviews.reviews.length ? reviews.summary : undefined;
   const shown = visible(all, settings);
   const sameModel = shown.filter((l) => l.model === item.model && l.id !== item.id).slice(0, 8);
   const related = shown
@@ -66,7 +72,19 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
     brand: { "@type": "Brand", name: item.brand },
     category: cat.name,
     itemCondition: "https://schema.org/UsedCondition",
-    ...(item.reviews > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: item.rating, reviewCount: item.reviews } } : {}),
+    ...(rated
+      ? {
+          aggregateRating: { "@type": "AggregateRating", ratingValue: rated.average, reviewCount: rated.count, bestRating: 5, worstRating: 1 },
+          review: reviews.reviews.slice(0, 5).map((r) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: r.name },
+            datePublished: r.createdAt.slice(0, 10),
+            reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+            ...(r.title ? { name: r.title } : {}),
+            reviewBody: r.body,
+          })),
+        }
+      : {}),
     offers: {
       "@type": "Offer",
       url: absoluteUrl(`/product/${item.id}`),
@@ -74,7 +92,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
       price: item.price,
       availability: item.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/UsedCondition",
-      seller: { "@type": "Organization", name: item.seller },
+      seller: { "@type": "Organization", name: seller.name },
     },
   };
 
@@ -120,7 +138,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
           Specs & checks
         </h2>
         <dl className="mt-6 grid border-t border-line sm:grid-cols-2">
-          {Object.entries({ Brand: item.brand, Grade: gradeName(item.grade), Location: item.state, Seller: item.seller, ...item.attrs })
+          {Object.entries({ Brand: item.brand, Grade: gradeName(item.grade), Location: item.state, Seller: seller.name, ...item.attrs })
             .filter(([, v]) => v)
             .map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 border-b border-line py-4 text-[15px] sm:pr-8 sm:odd:border-r sm:even:pl-8">
@@ -151,12 +169,14 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
         </div>
       </section>
 
+      <ProductReviews reviews={reviews.reviews} dist={reviews.dist} summary={rated} modelName={item.name} />
+
       {sameModel.length > 0 && (
         <section className="wrap pt-20" aria-labelledby="units-title">
           <h2 id="units-title" className="display text-[24px] md:text-[32px]">
             More {item.name} units
           </h2>
-          <p className="mt-2 text-[15px] text-ink-2">Same model, different grade, storage or seller.</p>
+          <p className="mt-2 text-[15px] text-ink-2">Same model, different grade, storage or colour.</p>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {sameModel.map((l, i) => (
               <ProductCard key={l.id} item={l} index={i} />

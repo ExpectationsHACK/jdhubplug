@@ -39,7 +39,7 @@ const columns: { title: string; links: [string, string][] }[] = [
     title: "Business",
     links: [
       ["Sell on JDHub", "/vendors"],
-      ["Vendor dashboard", "/vendors#dashboard"],
+      ["Partner benefits", "/vendors#dashboard"],
       ["Verification", "/vendors#verify"],
     ],
   },

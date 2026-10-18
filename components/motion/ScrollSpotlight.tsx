@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { sellerOf } from "@/lib/seller";
 import type { Product } from "@/lib/types";
 import { formatNaira, gradeLabel } from "../home/format";
 import { Icon, type IconName } from "../Icon";
@@ -22,7 +23,7 @@ export function ScrollSpotlight({ product }: { product: Product }) {
     { icon: "checkCircle", label: "JDHub grade", value: gradeLabel(product.grade) },
     battery
       ? { icon: "battery", label: "Battery health", value: battery }
-      : { icon: "verified", label: "Seller", value: product.verified ? "Verified" : product.seller },
+      : { icon: "verified", label: "Seller", value: sellerOf(product).name },
     { icon: "scan", label: isCar ? "VIN" : "IMEI", value: isCar ? "History checked" : "Checked · clean" },
     { icon: "shield", label: "Escrow", value: "Protected payment" },
     { icon: "tag", label: "Price", value: formatNaira(product.price) },

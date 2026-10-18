@@ -12,6 +12,8 @@ import { Icon, WhatsAppGlyph } from "./Icon";
 import { LeadForm } from "./LeadForm";
 import { OfferPrice } from "./offers/OfferPrice";
 import { GradePill } from "./ProductCard";
+import { RatingInline } from "./reviews/Stars";
+import { sellerOf } from "@/lib/seller";
 
 // Each listing is one specific graded unit (or a few identical accessories), so there
 // are no variant pickers or add-ons: what you see is exactly what ships.
@@ -43,6 +45,7 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
   );
   const low = item.stock > 0 && item.stock <= 2;
   const saving = item.was && item.was > item.price ? item.was - item.price : 0;
+  const seller = sellerOf(item);
 
   const buyNow = () => {
     if (left > 0) add(toCartProduct(item), units, heroImage() ?? undefined);
@@ -54,9 +57,12 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
       <p className="text-[14px] font-bold text-muted">{item.brand}</p>
       <h1 className="display mt-1 text-[28px] md:text-[36px]">{item.name}</h1>
       <p className="mt-1 text-[15px] text-ink-2">{item.spec}</p>
-      <p className="mt-2 flex items-center gap-1 text-[14px] text-ink-2">
-        <Icon name="star" size={15} className="fill-ink" /> {item.rating} · {item.reviews} reviews
-      </p>
+      {item.ratingSummary && (
+        <a href="#reviews" className="mt-2 inline-flex items-center gap-1 rounded-md text-[14px] text-ink-2 hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+          <RatingInline summary={item.ratingSummary} size={15} />
+          <span>· verified reviews</span>
+        </a>
+      )}
 
       {/* Price + stock */}
       <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
@@ -87,11 +93,11 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
         </span>
         <div className="flex-1 text-[14px]">
           <p className="flex items-center gap-1 font-bold">
-            {item.seller}
-            {item.verified && <Icon name="verified" size={16} className="text-accent" label="Verified seller" />}
+            {seller.name}
+            {seller.verified && <Icon name="verified" size={16} className="text-accent" label="Verified seller" />}
           </p>
           <p className="text-muted">
-            {item.verified ? "ID-verified seller" : "Phone-verified seller"} · Ships from {item.state}
+            {seller.isStore ? "Sold and inspected by JDHub" : seller.verified ? "Verified seller" : "Seller"} · Ships from {item.state}
           </p>
         </div>
       </div>

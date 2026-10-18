@@ -8,6 +8,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { formatNaira } from "@/lib/reference";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { STATUS_LABEL } from "@/lib/order-status";
+import { isReviewable, reviewKeyFor, reviewPathFor, reviewsForLines } from "@/lib/reviews";
 import { listOrders } from "@/lib/store";
 import type { Customer, Order } from "@/lib/types";
 import { signOutAction } from "../signin/actions";
@@ -43,6 +44,10 @@ async function AccountBody() {
     );
   }
   const orders = ordersFor(customer, await listOrders());
+  // Delivered lines the buyer hasn't reviewed yet.
+  const delivered = orders.filter((o) => isReviewable(o.status)).flatMap((o) => o.lines.map((l) => ({ order: o, line: l })));
+  const written = await reviewsForLines(delivered.map((d) => ({ orderId: d.order.id, productId: d.line.productId })));
+  const toReview = delivered.filter((d) => !written.has(reviewKeyFor(d.order.id, d.line.productId))).slice(0, 10);
   return (
     <section className="wrap max-w-4xl py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -55,6 +60,36 @@ async function AccountBody() {
           <button className="btn btn-outline">Sign out</button>
         </form>
       </div>
+
+      {toReview.length > 0 && (
+        <section aria-labelledby="rate-h" className="mt-10">
+          <h2 id="rate-h" className="text-[18px] font-bold">
+            Rate your purchases
+          </h2>
+          <p className="mt-1 text-[14px] text-ink-2">Your review helps other buyers, and shows with a Verified purchase label.</p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {toReview.map(({ order: o, line: l }) => (
+              <li key={`${o.id}:${l.productId}`}>
+                <Link
+                  href={reviewPathFor(o, l.productId)}
+                  className="flex items-center gap-3 rounded-tile border border-line p-3 transition-colors hover:border-ink"
+                >
+                  <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-stage">
+                    <ProductImage item={{ ...l, art: l.art ?? "phone", tint: l.tint ?? "#2a2a2a" }} width={120} className="h-14 w-14" artClassName="h-12 w-12" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="line-clamp-1 block text-[14px] font-bold">{l.name}</span>
+                    <span className="text-[13px] text-muted">Order {o.id}</span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-bold">
+                    <Icon name="star" size={15} /> Rate
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <h2 className="mt-10 text-[18px] font-bold">Orders ({orders.length})</h2>
       {orders.length === 0 ? (
