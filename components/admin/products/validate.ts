@@ -64,10 +64,19 @@ export const roundTo500 = (n: number) => Math.max(500, Math.round(n / 500) * 500
 
 export type StockState = "in" | "low" | "out";
 
-export function stockState(stock: number, lowThreshold: number): StockState {
+/**
+ * Graded phones and cars are one-off units (stock 1 is normal), so they're never
+ * "low": only restockable lines (accessories, gadgets) are.
+ */
+export const ONE_OFF_CATEGORIES: readonly string[] = ["phones", "cars"];
+
+export function stockState(stock: number, lowThreshold: number, category?: string): StockState {
   if (stock <= 0) return "out";
+  if (category && ONE_OFF_CATEGORIES.includes(category)) return "in";
   return stock <= lowThreshold ? "low" : "in";
 }
+
+export const isLowStock = (p: { stock: number; category: string }, lowThreshold: number) => stockState(p.stock, lowThreshold, p.category) === "low";
 
 /** Parse a whole naira / unit amount typed by a person: "₦1,250,000" → 1250000. */
 export function parseWhole(raw: string): number | null {

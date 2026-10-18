@@ -97,7 +97,7 @@ export function Footer({ contact }: { contact: FooterContact }) {
               <ul className="space-y-3">
                 {c.links.map(([label, href]) => (
                   <li key={label}>
-                    <Link href={href} className="rounded-sm hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+                    <Link href={href} className="inline-block rounded-sm py-1 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-accent">
                       {label}
                     </Link>
                   </li>
@@ -115,13 +115,13 @@ export function Footer({ contact }: { contact: FooterContact }) {
             </span>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
-            <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
-            <Link href="/terms" className="hover:underline">Terms of use</Link>
-            <Link href="/returns" className="hover:underline">Returns & warranty</Link>
-            <Link href="/cookies" className="hover:underline">Cookie Policy</Link>
+            <Link href="/privacy" className="inline-block py-1 hover:underline">Privacy Policy</Link>
+            <Link href="/terms" className="inline-block py-1 hover:underline">Terms of use</Link>
+            <Link href="/returns" className="inline-block py-1 hover:underline">Returns & warranty</Link>
+            <Link href="/cookies" className="inline-block py-1 hover:underline">Cookie Policy</Link>
             <CookieSettingsButton />
-            <Link href="/trust#escrow" className="hover:underline">Escrow terms</Link>
-            <Link href="/credits" className="hover:underline">Photo credits</Link>
+            <Link href="/trust#escrow" className="inline-block py-1 hover:underline">Escrow terms</Link>
+            <Link href="/credits" className="inline-block py-1 hover:underline">Photo credits</Link>
           </div>
         </div>
         <p className="mt-6 text-muted">

@@ -1,11 +1,11 @@
-import posthog from "posthog-js";
+import { getPosthog, loadPosthog, posthogConfigured } from "./posthog-client";
 
 // Cookie / analytics consent (browser only). The choice is stored first-party in the
 // `jd_consent` cookie (mirrored to localStorage) as "<version>.<granted|denied>.<epoch ms>".
 // Bump CONSENT_VERSION when the optional cookies change, so everyone is asked again.
 //
-// PostHog starts opted out (instrumentation-client.ts) and only captures after
-// applyAnalytics(true). Essential cookies (session, cart, this one) need no consent.
+// PostHog is only downloaded and opted in by applyAnalytics(true); until then it
+// doesn't exist on the page. Essential cookies (session, cart, this one) need no consent.
 
 export const CONSENT_COOKIE = "jd_consent";
 export const CONSENT_VERSION = 1;
@@ -54,41 +54,39 @@ export function saveConsent(analytics: boolean) {
   window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT));
 }
 
-const posthogReady = () => !!process.env.NEXT_PUBLIC_POSTHOG_KEY && typeof window !== "undefined" && posthog.__loaded;
-
-/** Turn PostHog capturing on or off. Safe to call before PostHog has loaded or without a key. */
+/** Turn PostHog capturing on (loading it first if needed) or off. Safe without a key. */
 export function applyAnalytics(on: boolean) {
-  if (!posthogReady()) return;
+  if (!posthogConfigured() || typeof window === "undefined") return;
+  if (on) {
+    void loadPosthog().then((ph) => {
+      try {
+        // Re-check: the visitor may have declined while PostHog was downloading.
+        const choice = readConsent();
+        if (ph && (!choice || choice.analytics) && !ph.has_opted_in_capturing()) ph.opt_in_capturing({ captureEventName: false });
+      } catch {
+        /* analytics must never break the app */
+      }
+    });
+    return;
+  }
   try {
-    if (on) {
-      if (!posthog.has_opted_in_capturing()) posthog.opt_in_capturing({ captureEventName: false });
-    } else if (!posthog.has_opted_out_capturing()) {
-      posthog.opt_out_capturing();
-    }
+    const ph = getPosthog();
+    if (ph && !ph.has_opted_out_capturing()) ph.opt_out_capturing();
   } catch {
     /* analytics must never break the app */
   }
 }
 
-/**
- * Sync PostHog with the stored choice once it has loaded. With no choice yet,
- * reset PostHog to its default (opted out) so a stale opt-in can't leak through.
- */
+/** Apply the stored choice at startup: only a visitor who accepted loads PostHog. */
 export function syncAnalyticsWithConsent() {
   const choice = readConsent();
-  if (choice) return applyAnalytics(choice.analytics);
-  try {
-    if (posthogReady()) posthog.clear_opt_in_out_capturing();
-  } catch {
-    /* ignore */
-  }
+  if (choice?.analytics) applyAnalytics(true);
 }
 
 /** True only when PostHog is loaded and the visitor has opted in. */
 export function analyticsAllowed(): boolean {
-  if (!posthogReady()) return false;
   try {
-    return posthog.has_opted_in_capturing();
+    return !!getPosthog()?.has_opted_in_capturing();
   } catch {
     return false;
   }

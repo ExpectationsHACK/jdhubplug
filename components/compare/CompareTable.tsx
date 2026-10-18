@@ -121,7 +121,7 @@ export function CompareTable({ products }: { products: Product[] }) {
               {products.map((p) => (
                 <th key={p.id} scope="col" className="p-3 font-normal md:p-4">
                   <div className="relative">
-                    <Link href={`/product/${p.id}`} className="block overflow-hidden rounded-xl bg-stage focus-visible:outline-2 focus-visible:outline-accent">
+                    <Link href={`/product/${p.id}`} aria-label={p.name} className="block overflow-hidden rounded-xl bg-stage focus-visible:outline-2 focus-visible:outline-accent">
                       <ProductImage item={p} width={360} className={`aspect-square w-full ${p.stock <= 0 ? "opacity-60 grayscale" : ""}`} artClassName="h-3/4 w-3/4" />
                     </Link>
                     <WishlistButton product={p} className="absolute right-2 top-2 bg-white/90 p-1.5" size={18} />

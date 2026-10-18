@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isLowStock } from "@/components/admin/products/validate";
 import { redirect } from "next/navigation";
 import { listReviews } from "@/lib/reviews";
 import type { Session } from "@/lib/session";
@@ -22,7 +23,7 @@ export async function getNavBadges(): Promise<Record<string, number>> {
       // Orders someone has to act on: confirm a payment, or pack and ship.
       "/admin/orders": orders.filter((o) => o.status === "pending" || o.status === "paid" || o.status === "processing").length,
       "/admin/requests": leads.filter((l) => l.status === "new").length,
-      "/admin/inventory": products.filter((p) => p.status === "active" && p.stock > 0 && p.stock <= threshold).length,
+      "/admin/inventory": products.filter((p) => p.status === "active" && isLowStock(p, threshold)).length,
       "/admin/reviews": reviews.filter((r) => r.status === "pending").length,
     };
   } catch (e) {

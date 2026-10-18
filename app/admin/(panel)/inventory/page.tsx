@@ -34,7 +34,7 @@ export default async function InventoryPage() {
   const tracked = products.filter((p) => p.status !== "archived");
   const units = tracked.reduce((n, p) => n + p.stock, 0);
   const value = tracked.reduce((n, p) => n + p.price * p.stock, 0);
-  const lowList = tracked.filter((p) => stockState(p.stock, low) === "low").sort((a, b) => a.stock - b.stock || b.sold - a.sold);
+  const lowList = tracked.filter((p) => stockState(p.stock, low, p.category) === "low").sort((a, b) => a.stock - b.stock || b.sold - a.sold);
   const outList = tracked.filter((p) => p.stock <= 0).sort((a, b) => b.sold - a.sold || b.updatedAt.localeCompare(a.updatedAt));
 
   const byCategory = CATEGORY_OPTIONS.map((c) => {

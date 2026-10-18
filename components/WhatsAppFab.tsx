@@ -1,9 +1,17 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { waLink } from "@/lib/settings";
 import { WhatsAppGlyph } from "./Icon";
 
+// Pages with their own WhatsApp actions and bottom bars, where a floating button would
+// cover buttons (product buy box, checkout, order pages, compare tray).
+const HIDDEN_ON = [/^\/product\//, /^\/checkout/, /^\/order\//, /^\/compare/, /^\/trade-in\//];
+
 /** Floating WhatsApp button. The number comes from /admin/settings. */
 export function WhatsAppFab({ whatsapp, storeName = "JDHub" }: { whatsapp: string; storeName?: string }) {
-  if (!whatsapp.replace(/\D/g, "")) return null;
+  const path = usePathname();
+  if (!whatsapp.replace(/\D/g, "") || HIDDEN_ON.some((r) => r.test(path))) return null;
   return (
     <a
       href={waLink(whatsapp, `Hi ${storeName}, I need help with `)}

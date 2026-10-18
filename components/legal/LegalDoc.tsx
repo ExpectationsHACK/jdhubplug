@@ -31,7 +31,7 @@ export function LegalDoc({ page, legal, intro, sections }: { page: LegalPage; le
             <ol className="space-y-2 text-[14px]">
               {all.map((s, i) => (
                 <li key={s.id}>
-                  <a href={`#${s.id}`} className="flex gap-2 text-ink-2 hover:text-ink hover:underline">
+                  <a href={`#${s.id}`} className="flex gap-2 py-1 text-ink-2 hover:text-ink hover:underline">
                     <span className="w-5 shrink-0 text-muted">{i + 1}.</span>
                     <span>{s.title}</span>
                   </a>

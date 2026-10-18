@@ -160,7 +160,7 @@ export function ConsentBanner({ required }: { required: boolean }) {
 }
 
 /** "Cookie settings" link-style button that reopens the panel. */
-export function CookieSettingsButton({ className = "hover:underline", children = "Cookie settings" }: { className?: string; children?: React.ReactNode }) {
+export function CookieSettingsButton({ className = "inline-block py-1 hover:underline", children = "Cookie settings" }: { className?: string; children?: React.ReactNode }) {
   return (
     <button type="button" onClick={() => window.dispatchEvent(new Event(CONSENT_OPEN_EVENT))} className={className}>
       {children}

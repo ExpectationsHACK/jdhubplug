@@ -66,18 +66,24 @@ export function Header({
     <>
       {promo && (
         <div className="relative bg-ink text-white">
-          <div className="wrap flex min-h-10 flex-wrap items-center justify-center gap-x-3 py-2 pr-12 text-center text-[12px] md:text-[13px]">
-            <span>{promoSettings.text}</span>
-            {promoSettings.link && (
-              <Link href={promoSettings.link} className="font-bold underline underline-offset-4">
-                Learn more
-              </Link>
-            )}
-          </div>
+          {/* One paragraph so the link flows inline: two lines at most on a phone. */}
+          <p className="wrap flex min-h-10 items-center justify-center py-2 pl-12 pr-12 text-center text-[12px] leading-snug md:text-[13px]">
+            <span>
+              {promoSettings.text}
+              {promoSettings.link && (
+                <>
+                  {" "}
+                  <Link href={promoSettings.link} className="ml-1 whitespace-nowrap font-bold underline underline-offset-4">
+                    Learn more
+                  </Link>
+                </>
+              )}
+            </span>
+          </p>
           <button
             aria-label="Close banner"
             onClick={() => setPromo(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 opacity-80 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-white"
+            className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full opacity-80 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-white"
           >
             <Icon name="close" size={18} />
           </button>

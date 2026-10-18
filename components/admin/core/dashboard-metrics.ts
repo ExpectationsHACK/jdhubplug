@@ -1,6 +1,7 @@
 // Dashboard numbers, computed from raw store data. Pure (no I/O), so it's easy to reason
 // about and cheap to run on every dashboard load.
 
+import { isLowStock } from "@/components/admin/products/validate";
 import { offerState } from "@/lib/pricing";
 import type { Lead, Offer, OfferStats, Order, OrderStatus, Product, Settings } from "@/lib/types";
 import { lagosDay, lagosDayStart } from "./format";
@@ -102,7 +103,7 @@ export function computeDashboard(input: {
 
   const active = products.filter((p) => p.status === "active");
   const threshold = settings.lowStockThreshold;
-  const low = active.filter((p) => p.stock > 0 && p.stock <= threshold).sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name));
+  const low = active.filter((p) => isLowStock(p, threshold)).sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name));
 
   const liveOffers = offers
     .map((offer) => ({ offer, stats: offerStats[offer.code] ?? { views: 0, orders: 0, revenue: 0 } }))

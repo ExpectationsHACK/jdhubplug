@@ -153,7 +153,7 @@ async function Dashboard() {
           label="Low stock"
           value={m.lowStockCount}
           tone={m.lowStockCount ? "warn" : "default"}
-          hint={`${settings.lowStockThreshold} or fewer left`}
+          hint={`Accessories & gadgets with ${settings.lowStockThreshold} or fewer left`}
           href="/admin/inventory"
           icon="layers"
         />
@@ -246,7 +246,7 @@ async function Dashboard() {
             </div>
           </Panel>
 
-          <Panel i={12} title="Low stock" description={`Live products with ${settings.lowStockThreshold} or fewer units`} href="/admin/inventory">
+          <Panel i={12} title="Low stock" description={`Restockable items (accessories, gadgets) with ${settings.lowStockThreshold} or fewer units. Graded phones and cars are one-offs.`} href="/admin/inventory">
             {m.lowStock.length ? (
               <ul className="-my-1">
                 {m.lowStock.map((p) => (

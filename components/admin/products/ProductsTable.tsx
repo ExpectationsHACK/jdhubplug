@@ -114,7 +114,7 @@ export function ProductsTable({
     for (const p of rows) {
       c[p.status]++;
       if (p.status === "archived") continue;
-      const st = stockState(p.stock, lowStock);
+      const st = stockState(p.stock, lowStock, p.category);
       if (st === "low") c.low++;
       if (st === "out") c.out++;
     }
@@ -129,7 +129,7 @@ export function ProductsTable({
         (!f.category || p.category === f.category) &&
         (!f.brand || p.brand === f.brand) &&
         (!f.grade || p.grade === f.grade) &&
-        (!f.stock || (stockState(p.stock, lowStock) === f.stock && (f.status === "archived" || p.status !== "archived"))) &&
+        (!f.stock || (stockState(p.stock, lowStock, p.category) === f.stock && (f.status === "archived" || p.status !== "archived"))) &&
         terms.every((t) => haystack.get(p.id)!.includes(t)),
     );
     return out.sort(compare[f.sort] ?? compare.newest);
