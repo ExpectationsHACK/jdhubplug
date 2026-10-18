@@ -131,7 +131,7 @@ export async function login(email: string, password: string): Promise<LoginResul
   const ip = await clientIp();
   const e = email.trim().toLowerCase();
   // Every attempt counts (atomically), per IP and per account, before the password is checked.
-  const allowed = (await rateLimit(`login-ip:${ip}`, 10, 15 * 60)) && (await rateLimit(`login-id:${e || "owner"}`, 10, 15 * 60));
+  const allowed = (await rateLimit(`login-ip:${ip}`, 10, 15 * 60)) && (await rateLimit(`login-id:${e || "owner"}`, 30, 15 * 60));
   if (!allowed) return { ok: false, error: "Too many attempts. Wait 15 minutes and try again." };
 
   const owner = ownerPassword();

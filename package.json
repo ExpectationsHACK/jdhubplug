@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:orders": "tsx --conditions=react-server scripts/test-orders.mts"
+    "test:orders": "tsx --conditions=react-server scripts/test-orders.mts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",
@@ -21,6 +22,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",

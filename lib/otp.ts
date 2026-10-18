@@ -13,7 +13,10 @@ export type ChannelStatus = { sms: boolean; email: boolean; dev: boolean };
 export function otpChannels(): ChannelStatus {
   const sms = !!process.env.TERMII_API_KEY;
   const email = !!process.env.RESEND_API_KEY;
-  return { sms, email, dev: !sms && !email && process.env.NODE_ENV !== "production" };
+  // Codes are shown on screen only in development, or in local production test runs
+  // (OTP_DEV_CODES=1, e.g. the browser tests). Never on Vercel.
+  const devAllowed = process.env.NODE_ENV !== "production" || (process.env.OTP_DEV_CODES === "1" && !process.env.VERCEL);
+  return { sms, email, dev: !sms && !email && devAllowed };
 }
 
 /** True if shoppers can sign in at all in this environment. */
