@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getLegalContent } from "@/lib/legal-store";
 import { TrackProductView } from "@/components/TrackProductView";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: PageProps<"/product/[id]">): 
 }
 
 export default async function ProductPage({ params }: PageProps<"/product/[id]">) {
-  const [item, all, settings] = await Promise.all([getCatalogProduct((await params).id), getCatalog(), getStoreSettings()]);
+  const [item, all, settings, legal] = await Promise.all([getCatalogProduct((await params).id), getCatalog(), getStoreSettings(), getLegalContent()]);
   if (!item) notFound();
   const cat = getCategory(item.category)!;
   const seller = sellerOf(item);
@@ -153,7 +154,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
         <div className="grid gap-4 md:grid-cols-3">
           {[
             { icon: "shield" as const, t: "Escrow by default", b: "Funds release only after you confirm the item matches its grade." },
-            { icon: "swap" as const, t: "7-day returns", b: "Not as described? Open a dispute and JDHub mediates a refund." },
+            { icon: "swap" as const, t: `${legal.returnDays}-day returns`, b: "Not as described? Open a dispute and JDHub mediates a refund." },
             {
               icon: "pin" as const,
               t: "Inspect at a hub",

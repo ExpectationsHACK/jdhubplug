@@ -18,22 +18,27 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
+    // Visitors who already answered the cookie banner (analytics declined), so it doesn't cover the page.
+    storageState: "e2e/consented.json",
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "setup", testMatch: /admin\.setup\.ts/ },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, dependencies: ["setup"] },
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /storefront\.spec\.ts/ },
   ],
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
+    // Always a fresh server: the store lives in its memory, so a reused one carries old state.
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       ADMIN_PASSWORD,
       AUTH_SECRET: "e2e-only-secret-not-for-production",
       OTP_DEV_CODES: "1",
-      // Force the in-memory store even if the shell has real credentials.
+      // Force a fresh in-memory store (no .data snapshot) even if the shell has real credentials.
+      JDHUB_MEMORY_ONLY: "1",
       SUPABASE_URL: "",
       NEXT_PUBLIC_SUPABASE_URL: "",
       UPSTASH_REDIS_REST_URL: "",

@@ -2,6 +2,7 @@
 // rebuilt field by field from known keys with checked types, so nothing unexpected
 // (extra keys, wrong types, scripts in URLs) reaches the store.
 
+import { STAGES } from "@/lib/tradein-flow";
 import type {
   ArtKind,
   Badge,
@@ -43,7 +44,7 @@ const ARTS = ["phone", "earbuds", "charger", "case", "powerbank", "laptop", "tab
 const BADGES = ["New", "Best seller", "Hot deal", "Swap pick"] as const satisfies readonly Badge[];
 const STATUSES = ["active", "draft", "archived"] as const satisfies readonly ProductStatus[];
 const LEAD_TYPES = ["sell", "swap", "contact", "vendor"] as const satisfies readonly LeadType[];
-const LEAD_STATUSES = ["new", "contacted", "closed"] as const satisfies readonly Lead["status"][];
+const LEAD_STATUSES = STAGES as readonly Lead["status"][];
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
@@ -255,9 +256,22 @@ export function sanitizeLead(raw: unknown, now: string): Lead {
     message: str(raw, "message", 5000),
     ...(details ? { details } : {}),
     status: oneOf(raw, "status", LEAD_STATUSES, "new"),
+    ...(typeof raw.token === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(raw.token) ? { token: raw.token } : {}),
+    // Trade-in details and history are kept as-is (bounded); only the owner can restore backups.
+    ...(boundedJson(raw.trade, 20_000) ? { trade: raw.trade as Lead["trade"] } : {}),
+    ...(Array.isArray(raw.history) && boundedJson(raw.history, 50_000) ? { history: raw.history.slice(0, 200) as Lead["history"] } : {}),
     createdAt,
     updatedAt: date(raw, "updatedAt", createdAt),
   };
+}
+
+function boundedJson(v: unknown, maxChars: number) {
+  if (v === undefined || v === null || typeof v !== "object") return false;
+  try {
+    return JSON.stringify(v).length <= maxChars;
+  } catch {
+    return false;
+  }
 }
 
 function sanitizeStats(raw: unknown): Record<string, OfferStats> {

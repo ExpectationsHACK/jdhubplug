@@ -2,7 +2,9 @@ import { expect, type Page } from "@playwright/test";
 import { ADMIN_PASSWORD } from "../playwright.config";
 
 /** A seed listing that always starts with several units (accessories are stocked 3-8). */
-export const STOCKED_ID = "airpods-pro-2-1";
+export const STOCKED_ID = "galaxy-buds2-pro-2";
+/** A second stocked listing, so cart tests don't compete with orders for units. */
+export const CART_ID = "airpods-max-1";
 
 export async function adminLogin(page: Page) {
   await page.goto("/admin/login");

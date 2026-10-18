@@ -280,8 +280,9 @@ export function renderOrderMessage(event: NotifyEvent, o: Order, ctx: TemplateCo
         body:
           hi +
           P(`Order <b>${e(o.id)}</b> has been ${verb}. We hope you love it.`) +
-          P(`If anything isn't as described, ${link(wa, "message us on WhatsApp")} right away. Your payment is still protected by escrow.`),
-        text: [`Order ${o.id} has been ${verb}. If anything isn't as described, contact us on WhatsApp: ${wa}`],
+          P(`If anything isn't as described, ${link(wa, "message us on WhatsApp")} right away. Your payment is still protected by escrow.`) +
+          P(`Happy with it? ${link(`${url}#review`, "Leave a verified review")}: it helps other buyers choose with confidence.`),
+        text: [`Order ${o.id} has been ${verb}. If anything isn't as described, contact us on WhatsApp: ${wa}`, `Leave a verified review: ${url}#review`],
         sms: `${store}: order ${o.id} has been ${verb}. Thank you! Anything wrong? WhatsApp +${s.whatsapp.replace(/\D/g, "")}`,
         cta: "View your order",
       };

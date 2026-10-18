@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getLegalContent } from "@/lib/legal-store";
 import { getStorefront, modelReps } from "@/components/home/storefront";
 import { Icon, WhatsAppGlyph, type IconName } from "@/components/Icon";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -16,15 +17,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/trust" },
 };
 
-const escrow: { icon: IconName; title: string; body: string }[] = [
+const escrowSteps = (days: number): { icon: IconName; title: string; body: string }[] => [
   { icon: "wallet", title: "You pay into escrow", body: "Your money is held in a protected account until you confirm the item." },
   { icon: "truck", title: "We ship", body: "JDHub inspects and sends the item, or you collect it at a JDHub hub." },
-  { icon: "checkCircle", title: "You confirm", body: "Check it matches its grade. You have 48 hours to confirm or raise an issue." },
+  { icon: "checkCircle", title: "You confirm", body: `Check it matches its grade. You have ${days} day${days === 1 ? "" : "s"} to confirm or raise an issue.` },
   { icon: "shield", title: "Funds release", body: "Only then is the payment released. Not as described? You get refunded." },
 ];
 
 export default async function TrustPage() {
-  const { products, settings } = await getStorefront();
+  const [{ products, settings }, legal] = await Promise.all([getStorefront(), getLegalContent()]);
+  const escrow = escrowSteps(legal.returnDays);
   const wa = (text: string) => waLink(settings.whatsapp, text);
   const tel = settings.phone.replace(/[^\d+]/g, "");
   // One photo per grade, so the grading table shows real units.
@@ -117,7 +119,7 @@ export default async function TrustPage() {
             <Icon name="chat" size={36} strokeWidth={1.25} />
             <h2 className="display mt-4 text-[26px]">Resolve a dispute</h2>
             <p className="mt-3 text-ink-2">
-              Item not as described? Open a case within 48 hours of delivery. JDHub reviews photos from both sides and decides
+              Item not as described? Open a case within {legal.returnDays} day{legal.returnDays === 1 ? "" : "s"} of delivery. JDHub reviews photos from both sides and decides
               within 3 working days. Escrow releases or refunds accordingly.
             </p>
             <a href={wa(`Hi ${settings.storeName}, I want to open a dispute for order #`)} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-6">

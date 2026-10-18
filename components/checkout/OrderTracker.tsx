@@ -20,7 +20,7 @@ export function OrderTracker({ status, delivery, history }: { status: OrderStatu
     { s: "paid", label: "Paid", hint: "Held in escrow" },
     { s: "processing", label: "Processing", hint: "Inspected & packed" },
     { s: "shipped", label: delivery === "pickup" ? "Ready at hub" : "Shipped", hint: delivery === "pickup" ? "Come pick it up" : "On its way" },
-    { s: "delivered", label: delivery === "pickup" ? "Collected" : "Delivered", hint: "7-day check window" },
+    { s: "delivered", label: delivery === "pickup" ? "Collected" : "Delivered", hint: "Check window per our returns policy" },
     { s: "completed", label: "Completed", hint: "Escrow released" },
   ];
   const p = reached / (steps.length - 1);

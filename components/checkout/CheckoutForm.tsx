@@ -482,7 +482,7 @@ export function CheckoutForm({ settings, paystack, prefill }: { settings: Checko
             <Icon name="scan" size={18} /> Every unit graded and IMEI / serial checked.
           </li>
           <li className="flex items-center gap-2">
-            <Icon name="swap" size={18} /> 7-day returns if it isn&apos;t as described.
+            <Icon name="swap" size={18} /> Returns if it isn&apos;t as described (<a href="/returns" className="underline underline-offset-2">policy</a>).
           </li>
         </ul>
       </aside>
