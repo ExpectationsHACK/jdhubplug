@@ -1,5 +1,6 @@
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { CompareTray } from "@/components/compare/CompareTray";
 import { FlyToCart } from "@/components/cart/FlyToCart";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -8,6 +9,7 @@ import { ScrollProgress } from "@/components/motion/PageTransition";
 import { AnalyticsIdentity } from "@/components/AnalyticsIdentity";
 import { ActiveOfferBanner } from "@/components/offers/ActiveOfferBanner";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
+import { WishlistSync } from "@/components/wishlist/WishlistSync";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { Suspense } from "react";
 
@@ -37,6 +39,9 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
       </main>
       <Footer contact={{ whatsapp: settings.whatsapp, phone: settings.phone, email: settings.email, storeName: settings.storeName }} />
       <WhatsAppFab whatsapp={settings.whatsapp} storeName={settings.storeName} />
+      <Suspense fallback={null}>
+        <CompareTray />
+      </Suspense>
       <CartDrawer />
       <FlyToCart />
     </CartProvider>
@@ -46,5 +51,10 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
 /** Links analytics to the signed-in customer (request-time, so it streams in). */
 async function Identity() {
   const customer = await getCurrentCustomer();
-  return <AnalyticsIdentity customerId={customer?.id ?? null} />;
+  return (
+    <>
+      <AnalyticsIdentity customerId={customer?.id ?? null} />
+      <WishlistSync customerId={customer?.id ?? null} contact={customer ? (customer.email ?? customer.contactEmail ?? customer.phone ?? customer.contactPhone) : undefined} />
+    </>
+  );
 }

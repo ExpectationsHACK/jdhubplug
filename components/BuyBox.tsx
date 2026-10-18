@@ -9,7 +9,9 @@ import type { Product } from "@/lib/types";
 import { AddToCartButton } from "./cart/AddToCartButton";
 import { toCartProduct, useCart } from "./cart/CartProvider";
 import { Icon, WhatsAppGlyph } from "./Icon";
-import { LeadForm } from "./LeadForm";
+import { CompareToggle } from "./compare/CompareToggle";
+import { StockAlertForm } from "./stock-alerts/StockAlertForm";
+import { WishlistButton } from "./wishlist/WishlistButton";
 import { OfferPrice } from "./offers/OfferPrice";
 import { GradePill } from "./ProductCard";
 
@@ -57,6 +59,10 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
       <p className="mt-2 flex items-center gap-1 text-[14px] text-ink-2">
         <Icon name="star" size={15} className="fill-ink" /> {item.rating} · {item.reviews} reviews
       </p>
+      <div className="mt-3 flex items-center gap-5">
+        <WishlistButton product={item} withLabel size={22} />
+        <CompareToggle product={item} />
+      </div>
 
       {/* Price + stock */}
       <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
@@ -100,26 +106,10 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
       <div className="mt-6 border-t border-line pt-6">
         {soldOut ? (
           <div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button type="button" disabled className="btn btn-lg">
-                Sold out
-              </button>
-              <Link href={`/shop/${item.category}`} className="btn btn-outline btn-lg">
-                Shop similar
-              </Link>
-            </div>
-            <div className="mt-6 rounded-tile bg-stage p-5">
-              <p className="flex items-center gap-2 text-[16px] font-bold">
-                <Icon name="mail" size={20} /> Notify me
-              </p>
-              <p className="mb-4 mt-1 text-[14px] text-ink-2">This unit has been sold. Leave your number and we&apos;ll tell you when a similar one lands.</p>
-              <LeadForm
-                type="contact"
-                details={{ productId: item.id, product: item.name, reason: "notify-restock" }}
-                submitLabel="Notify me"
-                messageLabel="Preferred storage, colour or budget (optional)"
-              />
-            </div>
+            <StockAlertForm item={item} />
+            <Link href={`/shop/${item.category}`} className="btn btn-outline btn-lg mt-3 w-full">
+              Shop similar
+            </Link>
           </div>
         ) : (
           <>
@@ -202,9 +192,9 @@ export function BuyBox({ item, whatsapp }: { item: Product; whatsapp?: string })
           <p className="text-[18px] font-bold">{formatNaira(item.price)}</p>
         </div>
         {soldOut ? (
-          <button type="button" disabled className="btn">
-            Sold out
-          </button>
+          <a href="#notify-me" className="btn btn-primary">
+            Notify me
+          </a>
         ) : (
           <button type="button" onClick={buyNow} className="btn btn-primary">
             Buy now

@@ -6,6 +6,7 @@ import type { BulkOp, SaveState } from "@/components/admin/products/types";
 import { audit } from "@/lib/auth";
 import { TAGS } from "@/lib/data";
 import { refreshFromAction } from "@/lib/revalidate";
+import { queueStockAlerts } from "@/lib/stock-alerts";
 import { adjustStock, deleteProducts, getProduct, getProducts, newProductId, saveProducts, setStock, withLock } from "@/lib/store";
 import type { Product } from "@/lib/types";
 import { PRODUCTS_LOCK, UserError, checkId, checkIds, checkInt, ok, runAction, type ActionResult } from "./_lib/run";
@@ -57,6 +58,7 @@ export async function setStockAction(id: string, units: number): Promise<ActionR
     await setStock(pid, n);
     await audit(s, "product.stock", pid, `stock ${cur.stock} → ${n}`);
     refreshFromAction(TAGS.catalog);
+    if (n > 0) queueStockAlerts();
     return ok({ stock: n }, n === 0 ? "Marked as sold out." : `Stock set to ${n}.`);
   });
 }
@@ -72,6 +74,7 @@ export async function adjustStockAction(id: string, delta: number): Promise<Acti
     const after = await adjustStock(pid, d);
     await audit(s, "product.stock", pid, `stock ${d > 0 ? "+" : ""}${d} → ${after}`);
     refreshFromAction(TAGS.catalog);
+    if (after > 0) queueStockAlerts();
     return ok({ stock: after }, d > 0 ? `Added ${d} ${d === 1 ? "unit" : "units"}. ${after} in stock.` : `${after} in stock.`);
   });
 }
@@ -126,6 +129,7 @@ export async function bulkProductsAction(ids: string[], op: BulkOp): Promise<Act
       if (parts.length) {
         await audit(s, "product.bulk-stock", [...found.keys()].join(","), `stock → ${action.units} on ${parts.length} products: ${summarize(parts)}`);
         refreshFromAction(TAGS.catalog);
+        if (action.units > 0) queueStockAlerts();
       }
       return ok({ count: parts.length }, `Stock set to ${action.units} on ${parts.length} ${parts.length === 1 ? "product" : "products"}.`);
     }
@@ -179,6 +183,7 @@ export async function bulkProductsAction(ids: string[], op: BulkOp): Promise<Act
               : `price ${action.percent > 0 ? "+" : ""}${action.percent}% (rounded to ₦500)`;
       await audit(s, `product.bulk-${action.type}`, changed.map((p) => p.id).join(","), `${what} on ${changed.length} products: ${summarize(parts)}`);
       refreshFromAction(TAGS.catalog);
+      if (action.type === "status" && action.status === "active") queueStockAlerts();
       return ok({ count: changed.length }, `Updated ${changed.length} ${changed.length === 1 ? "product" : "products"}.`);
     });
   });
@@ -249,6 +254,7 @@ export async function saveProductAction(prev: SaveState, form: FormData): Promis
         if (!changes.length) return ok({ id, created: false }, "No changes to save.");
         await audit(s, "product.update", id, changes.join("; "));
         refreshFromAction(TAGS.catalog);
+        queueStockAlerts();
         return ok({ id, created: false }, "Product saved.");
       });
     }
@@ -260,6 +266,7 @@ export async function saveProductAction(prev: SaveState, form: FormData): Promis
     const dup = intent === "duplicate" && sourceId ? ` (copy of ${sourceId.slice(0, 120)})` : "";
     await audit(s, dup ? "product.duplicate" : "product.create", id, `${fields.name} · ${naira(fields.price)} · stock ${fields.stock} · ${fields.status}${dup}`);
     refreshFromAction(TAGS.catalog);
+    queueStockAlerts();
     return ok({ id, created: true }, dup ? "Saved as a new product." : "Product created.");
   });
 

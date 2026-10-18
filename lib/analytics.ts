@@ -23,7 +23,12 @@ export type AnalyticsEvent =
   | "lead_submitted"
   | "signin_code_requested"
   | "signin_completed"
-  | "whatsapp_clicked";
+  | "whatsapp_clicked"
+  | "wishlist_add"
+  | "wishlist_remove"
+  | "compare_add"
+  | "compare_viewed"
+  | "stock_alert_requested";
 
 const enabled = () => typeof window !== "undefined" && !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 

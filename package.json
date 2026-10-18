@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:orders": "tsx --conditions=react-server scripts/test-orders.mts"
+    "test:orders": "tsx --conditions=react-server scripts/test-orders.mts",
+    "test:extras": "tsx --conditions=react-server scripts/test-extras.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",

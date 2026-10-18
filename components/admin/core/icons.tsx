@@ -61,6 +61,7 @@ const paths = {
     </>
   ),
   activity: <path d="M3 12h4l2.5-6.5 5 13L17 12h4" />,
+  bell: <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15zM10 20.5a2 2 0 0 0 4 0" />,
   external: (
     <>
       <path d="M13.5 4.5h6v6M19.5 4.5 11 13" />
