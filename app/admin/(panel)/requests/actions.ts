@@ -3,20 +3,22 @@
 import { refresh } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { audit, requireAdmin } from "@/lib/auth";
-import { deleteLead, listLeads, saveLead } from "@/lib/store";
+import { deleteLead, getLead, saveLead, withLock } from "@/lib/store";
+import { isTradeIn, normalizeStatus } from "@/lib/tradein-flow";
 import type { Lead } from "@/lib/types";
 
 // Request (lead) Server Actions: status changes and deletion. Permission "leads:write".
 
 export type LeadActionState = { ok?: boolean; error?: string; message?: string };
 
+/** Contact and vendor requests only; sell / swap move through trade-actions.ts. */
 const STATUSES: Lead["status"][] = ["new", "contacted", "closed"];
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
 
 async function findLead(raw: FormDataEntryValue | null) {
   const id = String(raw ?? "");
   if (!ID_RE.test(id)) return null;
-  return (await listLeads()).find((l) => l.id === id) ?? null;
+  return getLead(id);
 }
 
 function friendly(e: unknown): LeadActionState {
@@ -33,12 +35,18 @@ export async function setLeadStatusAction(_prev: LeadActionState, form: FormData
     const s = await requireAdmin("leads:write");
     const status = String(form.get("status") ?? "") as Lead["status"];
     if (!STATUSES.includes(status)) return { error: "Unknown status." };
-    const lead = await findLead(form.get("id"));
-    if (!lead) return { error: "This request no longer exists." };
-    if (lead.status !== status) {
-      await saveLead({ ...lead, status });
-      await audit(s, "lead.status", lead.id, `${lead.status} → ${status}`);
-    }
+    const found = await findLead(form.get("id"));
+    if (!found) return { error: "This request no longer exists." };
+    if (isTradeIn(found)) return { error: "Open the request to move a sell or swap through its pipeline." };
+    const from = await withLock(`lead:${found.id}`, async () => {
+      const lead = await getLead(found.id);
+      if (!lead) return null;
+      const prev = normalizeStatus(lead);
+      if (prev !== status) await saveLead({ ...lead, status });
+      return prev;
+    });
+    if (from === null) return { error: "This request no longer exists." };
+    if (from !== status) await audit(s, "lead.status", found.id, `${from} → ${status}`);
     refresh();
     return { ok: true, message: status === "new" ? "Reopened." : `Marked ${status}.` };
   } catch (e) {
