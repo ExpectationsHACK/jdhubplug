@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
+import { track } from "@/lib/analytics";
 import { resendCodeAction, sendCodeAction, verifyCodeAction, type CodeState } from "./actions";
 
 export function SignInForm({ next, channels }: { next: string; channels: { sms: boolean; email: boolean; dev: boolean } }) {
@@ -56,6 +57,7 @@ export function SignInForm({ next, channels }: { next: string; channels: { sms: 
           start(async () => {
             const res = await sendCodeAction(identifier);
             setState(res);
+            if (res.step === "verify") track("signin_code_requested", { channel: res.channel });
             if (res.step === "verify") {
               setCooldown(30);
               setTimeout(() => boxes.current[0]?.focus(), 50);

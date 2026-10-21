@@ -1,11 +1,12 @@
 // Browser instrumentation: runs before the app becomes interactive.
 //   Sentry  — error tracking (NEXT_PUBLIC_SENTRY_DSN)
 //   PostHog — product analytics (NEXT_PUBLIC_POSTHOG_KEY), proxied through /ingest so
-//             ad blockers don't drop events.
+//             ad blockers don't drop events. Not even downloaded until the visitor
+//             accepts analytics (lib/consent.ts, ConsentBanner).
 // Both stay off until their keys are set.
 
 import * as Sentry from "@sentry/nextjs";
-import posthog from "posthog-js";
+import { syncAnalyticsWithConsent } from "./lib/consent";
 import { scrubEvent } from "./lib/sentry-scrub";
 
 const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -21,21 +22,7 @@ if (sentryDsn) {
   });
 }
 
-const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-if (posthogKey) {
-  try {
-    posthog.init(posthogKey, {
-      api_host: "/ingest",
-      ui_host: (process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com").replace(".i.posthog.com", ".posthog.com"),
-      defaults: "2026-08-30",
-      person_profiles: "identified_only",
-      respect_dnt: true,
-      // Admin screens are internal: don't track them or record them.
-      before_send: (event) => (event && typeof window !== "undefined" && window.location.pathname.startsWith("/admin") ? null : event),
-    });
-  } catch (e) {
-    console.warn("[analytics] PostHog failed to start", e);
-  }
-}
+// PostHog is loaded on demand, only after the visitor allows analytics (lib/posthog-client.ts).
+syncAnalyticsWithConsent();
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

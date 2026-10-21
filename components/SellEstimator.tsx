@@ -1,30 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { estimateOffer, formatNaira, grades, tradeInModels, whatsappLink, type Grade } from "@/lib/catalog";
-import { Icon } from "./Icon";
+import { estimateOffer, formatNaira, grades, tradeInModels, type Grade } from "@/lib/reference";
+import { DEFAULT_SETTINGS, waLink } from "@/lib/settings";
+import { tradeInImage } from "./checkout/tradein";
+import { Icon, WhatsAppGlyph } from "./Icon";
+import { LeadForm } from "./LeadForm";
+import { ProductImage } from "./ProductImage";
 
 /** Step-by-step instant offer: model → storage → condition → locked cash offer. */
-export function SellEstimator({ mode = "sell" }: { mode?: "sell" | "swap" }) {
+export function SellEstimator({ mode = "sell", whatsapp }: { mode?: "sell" | "swap"; whatsapp?: string }) {
   const [model, setModel] = useState("");
   const [storage, setStorage] = useState("");
   const [grade, setGrade] = useState<Grade | "">("");
+  const [locking, setLocking] = useState(false);
   const storages = Object.keys(tradeInModels.find((m) => m.model === model)?.storage ?? {});
   const offer = model && storage && grade ? estimateOffer(model, storage, grade) : 0;
   const step = !model ? 1 : !storage ? 2 : !grade ? 3 : 4;
+  const gradeName = grades.find((g) => g.id === grade)?.name ?? "";
+  const wa = waLink(
+    whatsapp ?? DEFAULT_SETTINGS.whatsapp,
+    `Hi JDHub, I'd like to ${mode} my ${model} ${storage} (${gradeName}). Instant offer: ${formatNaira(offer)}.`,
+  );
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
       <div className="space-y-4">
         <Step n={1} title="Choose your device" done={!!model} active={step === 1}>
+          <label htmlFor="sell-model" className="sr-only">
+            Model
+          </label>
           <select
+            id="sell-model"
             value={model}
             onChange={(e) => {
               setModel(e.target.value);
               setStorage("");
+              setLocking(false);
             }}
             className="field"
-            aria-label="Model"
           >
             <option value="">Select model</option>
             {tradeInModels.map((m) => (
@@ -37,7 +51,16 @@ export function SellEstimator({ mode = "sell" }: { mode?: "sell" | "swap" }) {
           {model ? (
             <div className="grid grid-cols-3 gap-2">
               {storages.map((s) => (
-                <button key={s} type="button" aria-pressed={storage === s} onClick={() => setStorage(s)} className="chip text-center font-bold">
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={storage === s}
+                  onClick={() => {
+                    setStorage(s);
+                    setLocking(false);
+                  }}
+                  className="chip text-center font-bold"
+                >
                   {s}
                 </button>
               ))}
@@ -50,7 +73,16 @@ export function SellEstimator({ mode = "sell" }: { mode?: "sell" | "swap" }) {
         <Step n={3} title="Condition" done={!!grade} active={step === 3}>
           <div className="grid gap-2 sm:grid-cols-2">
             {grades.map((g) => (
-              <button key={g.id} type="button" aria-pressed={grade === g.id} onClick={() => setGrade(g.id)} className="chip">
+              <button
+                key={g.id}
+                type="button"
+                aria-pressed={grade === g.id}
+                onClick={() => {
+                  setGrade(g.id);
+                  setLocking(false);
+                }}
+                className="chip"
+              >
                 <span className="flex items-center gap-2 font-bold">
                   <span className="grid h-6 w-6 place-items-center rounded-full bg-ink text-[11px] text-white">{g.letter}</span>
                   {g.name}
@@ -63,36 +95,64 @@ export function SellEstimator({ mode = "sell" }: { mode?: "sell" | "swap" }) {
       </div>
 
       <aside className="lg:sticky lg:top-24 lg:self-start">
-        <div className="rounded-tile bg-ink p-6 text-white">
-          <p className="text-[14px] font-bold text-white/70">{mode === "swap" ? "Your trade-in value" : "Your instant offer"}</p>
-          <p className="display mt-2 text-[40px]">{offer ? formatNaira(offer) : "₦ —"}</p>
-          <p className="mt-1 text-[13px] text-white/60">
-            {offer ? `${model} · ${storage} · ${grades.find((g) => g.id === grade)!.name}` : "Complete the steps to see your offer."}
-          </p>
-          <ul className="mt-6 space-y-2 border-t border-white/15 pt-5 text-[13px] text-white/80">
-            <li className="flex gap-2">
-              <Icon name="check" size={18} /> Offer locked for 7 days
-            </li>
-            <li className="flex gap-2">
-              <Icon name="truck" size={18} /> Free pickup or drop at a JDHub hub
-            </li>
-            <li className="flex gap-2">
-              <Icon name="wallet" size={18} /> Paid within 48 hours of inspection
-            </li>
-          </ul>
-          <a
-            href={
-              offer
-                ? whatsappLink(`Hi JDHub, I'd like to ${mode} my ${model} ${storage} (${grade}). Instant offer: ${formatNaira(offer)}.`)
-                : undefined
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!offer}
-            className={`btn btn-lg mt-6 w-full ${offer ? "btn-white" : "pointer-events-none bg-white/20 text-white/50"}`}
-          >
-            {mode === "swap" ? "Use as trade-in" : "Lock in this offer"}
-          </a>
+        <div className="overflow-hidden rounded-tile bg-ink text-white">
+          {/* Photo of the chosen model */}
+          <div className="relative grid h-48 place-items-center bg-gradient-to-b from-white/10 to-transparent">
+            {model ? (
+              <div key={model} className="fade-in h-40 w-40 overflow-hidden rounded-2xl bg-white">
+                <ProductImage item={tradeInImage(model)} width={330} className="h-40 w-40" artClassName="h-32 w-32" />
+              </div>
+            ) : (
+              <span className="grid h-24 w-24 place-items-center rounded-full bg-white/10">
+                <Icon name="smartphone" size={44} strokeWidth={1.25} />
+              </span>
+            )}
+          </div>
+          <div className="p-6 pt-2">
+            <p className="text-[14px] font-bold text-white/70">{mode === "swap" ? "Your trade-in value" : "Your instant offer"}</p>
+            <p key={offer} className="display fade-in mt-2 text-[40px]" aria-live="polite">
+              {offer ? formatNaira(offer) : "₦ —"}
+            </p>
+            <p className="mt-1 text-[13px] text-white/60">{offer ? `${model} · ${storage} · ${gradeName}` : "Complete the steps to see your offer."}</p>
+            <ul className="mt-6 space-y-2 border-t border-white/15 pt-5 text-[13px] text-white/80">
+              <li className="flex gap-2">
+                <Icon name="check" size={18} /> Offer locked for 7 days
+              </li>
+              <li className="flex gap-2">
+                <Icon name="truck" size={18} /> Free pickup or drop at a JDHub hub
+              </li>
+              <li className="flex gap-2">
+                <Icon name="wallet" size={18} /> Paid within 48 hours of inspection
+              </li>
+            </ul>
+
+            {locking && offer ? (
+              <div className="fade-in mt-6">
+                <p className="mb-3 text-[14px] font-bold">Where should we send your offer?</p>
+                <LeadForm
+                  type={mode === "swap" ? "swap" : "sell"}
+                  dark
+                  details={{ model, storage, grade: gradeName, estimate: String(offer) }}
+                  submitLabel="Lock in my offer"
+                  messageLabel="Pickup area or anything we should know (optional)"
+                  successTitle="Offer locked for 7 days."
+                  successBody="We'll call or WhatsApp you to book a free pickup or hub drop-off."
+                />
+                <a href={wa} target="_blank" rel="noopener noreferrer" className="btn btn-ghost-white mt-3 w-full">
+                  <WhatsAppGlyph size={18} /> Or continue on WhatsApp
+                </a>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={!offer}
+                onClick={() => setLocking(true)}
+                className={`btn btn-lg mt-6 w-full ${offer ? "btn-white" : "!bg-white/20 !text-white/50"}`}
+              >
+                {mode === "swap" ? "Use as trade-in" : "Lock in this offer"}
+              </button>
+            )}
+          </div>
         </div>
         <p className="mt-3 px-2 text-[12px] text-muted">
           Final offer confirmed after a free inspection. IMEI must be clean and the device signed out of iCloud / Google.
@@ -119,7 +179,7 @@ function Step({
     <section className={`rounded-tile border p-6 transition-colors ${active ? "border-ink" : "border-line"}`}>
       <h3 className="mb-4 flex items-center gap-3 text-[18px] font-bold">
         <span
-          className={`grid h-7 w-7 place-items-center rounded-full text-[13px] ${
+          className={`grid h-7 w-7 place-items-center rounded-full text-[13px] transition-colors ${
             done ? "bg-accent text-white" : active ? "bg-ink text-white" : "bg-stage text-muted"
           }`}
         >

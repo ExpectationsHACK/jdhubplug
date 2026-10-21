@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Montserrat } from "next/font/google";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/components/home/site";
 import "./globals.css";
 
 // Display: wide geometric sans for headlines. Body: neutral, highly legible sans.
@@ -15,16 +16,28 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
   title: {
     default: "JDHub | Buy, Sell & Swap Phones, Gadgets and Cars in Nigeria",
     template: "%s | JDHub",
   },
-  description:
-    "Nigeria's graded trade platform. Buy, sell and swap phones, accessories, gadgets and cars with transparent grading, verified sellers and escrow-protected payment.",
+  description: SITE_DESCRIPTION,
+  keywords: ["buy used iPhone Nigeria", "sell phone Lagos", "swap phone", "graded phones", "used cars Nigeria", "escrow"],
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_NG",
+    title: "JDHub | Trade with certainty",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image", title: "JDHub | Trade with certainty", description: SITE_DESCRIPTION },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

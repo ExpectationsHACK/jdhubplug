@@ -1,6 +1,7 @@
 import "server-only";
 
 import { buildSeedProducts } from "../catalog";
+import { normalizeCode } from "../codes";
 import { withDefaults } from "../settings";
 import type { AuditEntry, Customer, Lead, Offer, OfferStats, Order, Product, Settings, StaffUser } from "../types";
 import { getDriver, storageStatus } from "./driver";
@@ -13,7 +14,7 @@ export { storageStatus };
 //   jd:sold       hash  id -> units sold
 //   jd:orders     hash  id -> Order JSON
 //   jd:offers     hash  code -> Offer JSON
-//   jd:offerstats hash  "{code}:views|orders|revenue" -> number
+//   jd:offerstats hash  "{code}:views|orders|paid|revenue" -> number
 //   jd:leads      hash  id -> Lead JSON
 //   jd:staff      hash  id -> StaffUser JSON
 //   jd:settings   string Settings JSON
@@ -21,7 +22,7 @@ export { storageStatus };
 //   jd:customers  hash  id -> Customer JSON
 //   jd:customer:by hash "phone:+234..." | "email:..." -> customer id
 //   jd:otp:{key}  string one-time code record (hashed code, expiry, attempts)
-//   jd:rl:{key}   string rate-limit window record
+//   jd:rl:{key}:{window} counter for one rate-limit window (expires with it)
 //   jd:meta       hash  seeded -> seed version
 //   jd:seq:order  counter for order numbers
 
@@ -39,7 +40,6 @@ const K = {
   meta: "jd:meta",
   orderSeq: "jd:seq:order",
   seedLock: "jd:seed-lock",
-  loginFail: (who: string) => `jd:loginfail:${who}`,
   customers: "jd:customers",
   customerIndex: "jd:customer:by",
   otp: (key: string) => `jd:otp:${key}`,
@@ -247,13 +247,7 @@ export async function listOrders(): Promise<Order[]> {
 
 // -------------------------------------------------------------------- Offers
 
-export const normalizeCode = (code: string) =>
-  code
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
+export { normalizeCode };
 
 export async function listOffers(): Promise<Offer[]> {
   const all = await getDriver().hgetall(K.offers);
@@ -279,17 +273,31 @@ export async function deleteOffer(code: string) {
   const c = normalizeCode(code);
   const d = getDriver();
   await d.hdel(K.offers, [c]);
-  await d.hdel(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`]);
+  await d.hdel(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`, `${c}:paid`]);
 }
 
 export async function bumpOfferStat(code: string, field: keyof OfferStats, by: number) {
   return getDriver().hincrby(K.offerStats, `${normalizeCode(code)}:${field}`, Math.round(by));
 }
 
+/**
+ * Atomically take one use of an offer. With a usage limit, the counter is incremented
+ * first and given back if that went over, so two checkouts at the same moment can't
+ * both take the last use. Returns false when the offer is used up.
+ */
+export async function claimOfferUse(code: string, usageLimit?: number): Promise<boolean> {
+  const n = await bumpOfferStat(code, "orders", 1);
+  if (usageLimit !== undefined && n > usageLimit) {
+    await bumpOfferStat(code, "orders", -1);
+    return false;
+  }
+  return true;
+}
+
 export async function getOfferStats(code: string): Promise<OfferStats> {
   const c = normalizeCode(code);
-  const [views, orders, revenue] = await getDriver().hmget(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`]);
-  return { views: Number(views ?? 0), orders: Number(orders ?? 0), revenue: Number(revenue ?? 0) };
+  const [views, orders, revenue, paid] = await getDriver().hmget(K.offerStats, [`${c}:views`, `${c}:orders`, `${c}:revenue`, `${c}:paid`]);
+  return { views: Number(views ?? 0), orders: Number(orders ?? 0), revenue: Number(revenue ?? 0), paid: Number(paid ?? 0) };
 }
 
 export async function getAllOfferStats(): Promise<Record<string, OfferStats>> {
@@ -299,7 +307,7 @@ export async function getAllOfferStats(): Promise<Record<string, OfferStats>> {
     const i = k.lastIndexOf(":");
     const code = k.slice(0, i);
     const field = k.slice(i + 1) as keyof OfferStats;
-    out[code] ??= { views: 0, orders: 0, revenue: 0 };
+    out[code] ??= { views: 0, orders: 0, revenue: 0, paid: 0 };
     out[code][field] = Number(v);
   }
   return out;
@@ -325,6 +333,10 @@ export async function listLeads(): Promise<Lead[]> {
     .map((j) => parse<Lead>(j))
     .filter((l): l is Lead => !!l)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getLead(id: string): Promise<Lead | null> {
+  return parse<Lead>(await getDriver().hget(K.leads, id));
 }
 
 export async function saveLead(l: Lead) {
@@ -431,16 +443,11 @@ export async function deleteOtp(key: string) {
  * false once `limit` hits have happened inside the current window.
  */
 export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  // One atomic counter per window: parallel requests can't all read the same count.
   const d = getDriver();
-  const rec = parse<{ n: number; until: number }>(await d.get(K.rateLimit(key)));
-  const nowMs = Date.now();
-  if (!rec || rec.until < nowMs) {
-    await d.set(K.rateLimit(key), JSON.stringify({ n: 1, until: nowMs + windowSeconds * 1000 }));
-    return true;
-  }
-  if (rec.n >= limit) return false;
-  await d.set(K.rateLimit(key), JSON.stringify({ n: rec.n + 1, until: rec.until }));
-  return true;
+  const k = K.rateLimit(`${key}:${Math.floor(Date.now() / (windowSeconds * 1000))}`);
+  await d.setNx(k, "0", windowSeconds + 60);
+  return (await d.incr(k)) <= limit;
 }
 
 // ---------------------------------------------------------- Session epoch
@@ -452,26 +459,6 @@ export async function getSessionEpoch(): Promise<number> {
 
 export async function bumpSessionEpoch(): Promise<number> {
   return getDriver().incr(K.sessionEpoch);
-}
-
-// --------------------------------------------------------------- Login limit
-
-/** Failed logins in the current 15-minute window for this key (IP or email). */
-export async function loginFailures(who: string): Promise<number> {
-  const rec = parse<{ n: number; until: number }>(await getDriver().get(K.loginFail(who)));
-  if (!rec || rec.until < Date.now()) return 0;
-  return rec.n;
-}
-
-export async function recordLoginFailure(who: string) {
-  const d = getDriver();
-  const rec = parse<{ n: number; until: number }>(await d.get(K.loginFail(who)));
-  const fresh = !rec || rec.until < Date.now();
-  await d.set(K.loginFail(who), JSON.stringify({ n: fresh ? 1 : rec!.n + 1, until: fresh ? Date.now() + 15 * 60_000 : rec!.until }));
-}
-
-export async function clearLoginFailures(who: string) {
-  await getDriver().del(K.loginFail(who));
 }
 
 // --------------------------------------------------------------------- Locks

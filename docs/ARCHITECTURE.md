@@ -31,8 +31,11 @@ proxy.ts                     redirects signed-out visitors away from /admin
 
 ## Data rules
 
-- **Storage.** `lib/store` talks to Upstash Redis when `KV_REST_API_URL`/`KV_REST_API_TOKEN`
-  are set, otherwise to memory (snapshotted to `.data/` in development). The first read
+- **Storage.** `lib/store` talks to **Supabase Postgres** when `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` are set (through the `jd_*` SQL functions in
+  `supabase/migrations/0001_jdhub_store.sql`; stock reservation is one Postgres
+  transaction with row locks), else Upstash Redis (`KV_REST_API_URL`/`KV_REST_API_TOKEN`),
+  else memory (snapshotted to `.data/` in development). The first read
   seeds the catalog from `lib/models.ts`.
 - **Storefront reads** go through `lib/data.ts` (`getCatalog`, `getCatalogProduct`,
   `getStoreSettings`, `getPublicOffer`). They are `'use cache'` functions tagged
@@ -128,3 +131,24 @@ npm run lint
 npm run build
 npm run test:orders # stock/offer/order lifecycle tests
 ```
+
+## Customer messages, reviews, trade-ins and legal
+
+| Area | Code | Admin |
+| --- | --- | --- |
+| Email/SMS delivery (Resend, Termii) | `lib/messaging.ts` | System health card |
+| Order messages (placed, paid, shipped / ready for pickup, delivered + review invite, cancelled, refunded) | `lib/notify/*`, hooked into `placeOrder` / `transitionOrder` | `/admin/notifications` (toggles, previews, test email, log); order page "Messages" card |
+| Verified reviews (delivered orders only) | `lib/reviews.ts` | `/admin/reviews` (moderate, reply, auto-publish) |
+| Wishlist, compare | `lib/wishlist.ts`, `components/wishlist`, `components/compare` | – |
+| Back-in-stock alerts (by model) | `lib/stock-alerts.ts` (sent on restock, product saves and the daily cron) | `/admin/alerts` (demand by model, send now) |
+| Sell/swap pipeline (inspection → offer → payout or swap credit) | `lib/tradein*.ts`, `/trade-in/[id]?t=` | `/admin/requests/[id]` |
+| Legal pages, cookie consent, data requests (NDPA) | `lib/legal*.ts`, `lib/consent.ts` | `/admin/privacy` |
+| Offer usage limits | `claimOfferUse` (atomic claim before stock is reserved) | Offer page shows paid vs awaiting payment |
+
+PostHog only captures after a visitor accepts analytics in the cookie banner.
+
+## Tests
+
+- `npm run test:orders | test:notify | test:reviews | test:extras | test:tradein`: store-level tests on the in-memory store.
+- `npm run build && npm run test:e2e`: Playwright browser tests against a production build on a fresh in-memory store (`JDHUB_MEMORY_ONLY=1`, `OTP_DEV_CODES=1` so sign-in codes show on screen; never set these on Vercel).
+- `.github/workflows/ci.yml` runs all of the above on every push and pull request.

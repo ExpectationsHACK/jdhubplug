@@ -1,9 +1,11 @@
 "use client";
 
-import posthog from "posthog-js";
+import { analyticsAllowed } from "./consent";
+import { getPosthog } from "./posthog-client";
 
 // Product analytics events (PostHog). Keep event names stable: dashboards and funnels
-// depend on them. Every call is a no-op until NEXT_PUBLIC_POSTHOG_KEY is set.
+// depend on them. Every call is a no-op until NEXT_PUBLIC_POSTHOG_KEY is set and the
+// visitor has accepted analytics in the cookie banner (lib/consent.ts).
 //
 // Funnel: product_viewed → product_added_to_cart → checkout_started → order_placed (server)
 //         → order_paid (server).
@@ -23,14 +25,21 @@ export type AnalyticsEvent =
   | "lead_submitted"
   | "signin_code_requested"
   | "signin_completed"
-  | "whatsapp_clicked";
+  | "whatsapp_clicked"
+  | "wishlist_add"
+  | "wishlist_remove"
+  | "compare_add"
+  | "compare_viewed"
+  | "stock_alert_requested";
 
-const enabled = () => typeof window !== "undefined" && !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const enabled = () => typeof window !== "undefined" && analyticsAllowed();
+// Only called after enabled(), which guarantees PostHog is loaded.
+const ph = () => getPosthog()!;
 
 export function track(event: AnalyticsEvent, properties?: Record<string, unknown>) {
   if (!enabled()) return;
   try {
-    posthog.capture(event, properties);
+    ph().capture(event, properties);
   } catch {
     /* analytics must never break the app */
   }
@@ -40,7 +49,7 @@ export function track(event: AnalyticsEvent, properties?: Record<string, unknown
 export function identify(customerId: string) {
   if (!enabled()) return;
   try {
-    posthog.identify(customerId);
+    ph().identify(customerId);
   } catch {
     /* ignore */
   }
@@ -49,17 +58,23 @@ export function identify(customerId: string) {
 export function resetIdentity() {
   if (!enabled()) return;
   try {
-    posthog.reset();
+    // reset() also clears PostHog's consent state, so re-apply the visitor's choice after it.
+    const optedIn = ph().has_opted_in_capturing();
+    ph().reset();
+    if (optedIn) ph().opt_in_capturing({ captureEventName: false });
   } catch {
     /* ignore */
   }
 }
 
-/** The visitor's PostHog id, passed to the server so order events join their journey. */
+/**
+ * The visitor's PostHog id, passed to the server so order events join their journey.
+ * Undefined without analytics consent: the server then sends no events for the order.
+ */
 export function analyticsId(): string | undefined {
   if (!enabled()) return undefined;
   try {
-    return posthog.get_distinct_id();
+    return ph().get_distinct_id();
   } catch {
     return undefined;
   }

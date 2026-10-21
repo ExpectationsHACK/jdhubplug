@@ -21,6 +21,9 @@ export type ArtKind =
 
 export type Badge = "New" | "Best seller" | "Hot deal" | "Swap pick";
 
+/** Average (1 decimal) and count of published, verified-purchase reviews. */
+export type RatingSummary = { count: number; average: number };
+
 export type ProductStatus = "active" | "draft" | "archived";
 
 export type Product = {
@@ -41,8 +44,18 @@ export type Product = {
   state: string;
   seller: string;
   verified: boolean;
+  /**
+   * @deprecated Legacy seeded values, not real. The storefront ignores them (lib/data.ts
+   * zeroes them) and shows `ratingSummary` instead. Kept so stored products still parse.
+   */
   rating: number;
+  /** @deprecated See `rating`. */
   reviews: number;
+  /**
+   * Real published-review aggregate for this product's model. Attached by the
+   * storefront reads in lib/data.ts; never stored with the product.
+   */
+  ratingSummary?: RatingSummary;
   /** Fallback illustration kind and tint, used when no photo loads. */
   art: ArtKind;
   tint: string;
@@ -96,6 +109,9 @@ export type OrderLine = {
   spec: string;
   photo?: string;
   imageUrl?: string;
+  /** Fallback illustration, copied from the product so old orders render after it's deleted. */
+  art?: ArtKind;
+  tint?: string;
   qty: number;
   /** Unit price before any offer. */
   unitPrice: number;
@@ -114,6 +130,8 @@ export type Order = {
   id: string; // e.g. JDH-10234
   /** Signed-in customer who placed the order. */
   customerId?: string;
+  /** PostHog id of the browser that placed it, only when the visitor consented to analytics. */
+  analyticsId?: string;
   /** Secret used in customer-facing links so order pages can't be enumerated. */
   token: string;
   createdAt: string;
@@ -182,7 +200,8 @@ export type Offer = {
   updatedAt: string;
 };
 
-export type OfferStats = { views: number; orders: number; revenue: number };
+/** `orders` counts uses held by open orders (unpaid ones release theirs if they expire); `paid` counts paid ones. */
+export type OfferStats = { views: number; orders: number; revenue: number; paid: number };
 
 export type OfferState = "scheduled" | "live" | "expired" | "paused" | "exhausted";
 
@@ -191,9 +210,13 @@ export type OfferState = "scheduled" | "live" | "expired" | "paused" | "exhauste
 /** A shopper account. Passwordless: customers sign in with a one-time code. */
 export type Customer = {
   id: string;
-  /** E.164 phone, e.g. +2348031234567. */
+  /** Verified E.164 phone (signed in with an SMS code), e.g. +2348031234567. */
   phone?: string;
+  /** Verified email (signed in with an email code). */
   email?: string;
+  /** Unverified contact details typed at checkout; only used to prefill the next checkout. */
+  contactPhone?: string;
+  contactEmail?: string;
   name?: string;
   /** Default delivery details, saved from the last order. */
   address?: string;
@@ -211,6 +234,117 @@ export type OtpChannel = "sms" | "email";
 
 export type LeadType = "sell" | "swap" | "contact" | "vendor";
 
+/**
+ * Lead status. Contact and vendor requests only use new / contacted / closed (the
+ * original three, so leads stored before the trade-in pipeline still parse). Sell and
+ * swap requests move through the whole trade-in pipeline (lib/tradein-flow.ts).
+ */
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "inspection_booked"
+  | "inspected"
+  | "offer_sent"
+  | "accepted" // by the customer
+  | "declined" // by the customer
+  | "paid"
+  | "closed"
+  | "cancelled";
+
+/** One step on a lead's timeline. `from === to` for notes and message attempts. */
+export type LeadEvent = {
+  at: string;
+  by: string;
+  from: LeadStatus;
+  to: LeadStatus;
+  note?: string;
+  kind?: "status" | "note" | "message";
+};
+
+export type InspectionMethod = "pickup" | "dropoff";
+
+export type InspectionBooking = {
+  /** Slot start (ISO). */
+  at: string;
+  method: InspectionMethod;
+  /** Pickup address (method "pickup"). */
+  address?: string;
+  /** Hub city from settings.hubs (method "dropoff"). */
+  hub?: string;
+  /** Staff member doing the inspection. */
+  staff?: string;
+  bookedAt: string;
+  bookedBy: string;
+};
+
+export type ConditionCheck = "ok" | "minor" | "damaged";
+
+export type InspectionChecklist = {
+  imeiClean: boolean;
+  /** Signed out of iCloud / Google (activation lock off). */
+  accountSignedOut: boolean;
+  screen: ConditionCheck;
+  /** Battery health in percent, when the device reports it. */
+  batteryHealth?: number;
+  body: ConditionCheck;
+  /** Buttons, cameras, speakers, Face ID / fingerprint, charging. */
+  functions: "ok" | "issues";
+};
+
+export type InspectionResult = {
+  grade: Grade;
+  checklist: InspectionChecklist;
+  finalOffer: number;
+  notes?: string;
+  inspectedAt: string;
+  inspectedBy: string;
+};
+
+export type PayoutMethod = "bank" | "cash" | "swap_credit";
+
+/** Bank details as stored on the lead: the account number is masked. The full number
+ * lives in a separate admin-only key (see lib/tradein.ts). */
+export type PayoutBank = { bankName: string; accountName: string; accountMasked: string };
+
+export type TradeInPayout = {
+  method: PayoutMethod;
+  amount: number;
+  bank?: PayoutBank;
+  /** Transfer reference, receipt number, or the swap credit code / order id. */
+  reference?: string;
+  paidAt: string;
+  paidBy: string;
+};
+
+export type SwapCredit = {
+  /** Offer code (single use, fixed amount). */
+  code: string;
+  amount: number;
+  expiresAt: string;
+  issuedAt: string;
+  /** Set once an order used the code. */
+  redeemedAt?: string;
+  orderId?: string;
+};
+
+/** Trade-in pipeline data for sell / swap leads. Every field is optional so old leads parse. */
+export type TradeIn = {
+  /** Instant estimate from the sell / swap tool. */
+  estimate?: number;
+  /** The instant estimate is honoured until this time (7 days from the request). */
+  estimateLockedUntil?: string;
+  booking?: InspectionBooking;
+  inspection?: InspectionResult;
+  offerSentAt?: string;
+  response?: { decision: "accepted" | "declined"; at: string; by: string; reason?: string };
+  /** How the customer wants to be paid (chosen on accept). */
+  payoutChoice?: { method: PayoutMethod; bank?: PayoutBank };
+  payout?: TradeInPayout;
+  credit?: SwapCredit;
+  /** Why the lead was closed or cancelled. */
+  closeReason?: string;
+};
+
 export type Lead = {
   id: string;
   type: LeadType;
@@ -220,7 +354,11 @@ export type Lead = {
   message: string;
   /** Structured details, e.g. model/storage/grade/estimate for sell requests. */
   details?: Record<string, string>;
-  status: "new" | "contacted" | "closed";
+  status: LeadStatus;
+  /** Secret for the customer status page (/trade-in/{id}?t=…). Old leads get one lazily. */
+  token?: string;
+  trade?: TradeIn;
+  history?: LeadEvent[];
   createdAt: string;
   updatedAt: string;
 };
@@ -274,7 +412,7 @@ export type Settings = {
   requireAccountForCheckout: boolean;
 };
 
-export type StorageKind = "redis" | "file" | "memory";
+export type StorageKind = "supabase" | "redis" | "file" | "memory";
 
 export type StorageStatus = {
   kind: StorageKind;

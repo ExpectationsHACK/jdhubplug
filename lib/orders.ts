@@ -1,9 +1,12 @@
 import "server-only";
 
 import { captureServer } from "./analytics-server";
+import { notifyOrderPlaced, notifyOrderTransition } from "./notify/orders";
+import { ORDER_FLOW, STATUS_LABEL } from "./order-status";
 import { priceCart, type CartLineInput, type PricedCart } from "./pricing";
 import {
   bumpOfferStat,
+  claimOfferUse,
   getOffer,
   getOfferStats,
   getOrder,
@@ -24,27 +27,7 @@ import type { DeliveryMethod, Order, OrderStatus, PaymentMethod } from "./types"
 //   transitionOrder restores stock exactly once when an order is cancelled/refunded
 //   sweepExpiredOrders cancels unpaid orders whose reservation window has passed
 
-export const ORDER_FLOW: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["processing", "shipped", "refunded"],
-  processing: ["shipped", "refunded"],
-  shipped: ["delivered", "refunded"],
-  delivered: ["completed", "refunded"],
-  completed: ["refunded"],
-  cancelled: [],
-  refunded: [],
-};
-
-export const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "Awaiting payment",
-  paid: "Paid (in escrow)",
-  processing: "Processing",
-  shipped: "Shipped / ready at hub",
-  delivered: "Delivered",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  refunded: "Refunded",
-};
+export { ORDER_FLOW, STATUS_LABEL };
 
 const RESTOCK_ON: OrderStatus[] = ["cancelled", "refunded"];
 
@@ -52,7 +35,10 @@ export type PlaceOrderInput = {
   items: CartLineInput[];
   /** Signed-in customer placing the order (from getCustomer(), never from the client). */
   customerId?: string;
-  /** PostHog distinct id from the browser, so server-side order events join the visitor's journey. */
+  /**
+   * PostHog distinct id from the browser, so server-side order events join the visitor's journey.
+   * Only present when the visitor consented to analytics; without it no events are sent.
+   */
   analyticsId?: string;
   offerCode?: string;
   customer: Order["customer"];
@@ -103,8 +89,16 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     return { ok: false, error: msg, cart, soldOutId: bad?.product.id };
   }
 
+  // Take the offer use before the stock, atomically, so a limited offer can't be oversold.
+  const offerCode = cart.offer?.code;
+  if (offerCode && !(await claimOfferUse(offerCode, cart.offer?.usageLimit))) {
+    return { ok: false, error: "This offer has just been fully used. Remove the code to continue at the normal price.", cart };
+  }
+  const releaseOffer = () => (offerCode ? bumpOfferStat(offerCode, "orders", -1).catch(() => undefined) : undefined);
+
   const reservation = await reserveStock(cart.lines.map((l) => ({ productId: l.product.id, qty: l.qty })));
   if (!reservation.ok) {
+    await releaseOffer();
     const name = products.get(reservation.id)?.name ?? "An item";
     return {
       ok: false,
@@ -118,6 +112,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   const order: Order = {
     id: await nextOrderId(),
     customerId: input.customerId,
+    analyticsId: input.analyticsId?.slice(0, 200) || undefined,
     token: crypto.randomUUID().replace(/-/g, ""),
     createdAt,
     updatedAt: createdAt,
@@ -128,6 +123,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
       spec: l.product.spec,
       photo: l.product.photo,
       imageUrl: l.product.imageUrl,
+      art: l.product.art,
+      tint: l.product.tint,
       qty: l.qty,
       unitPrice: l.unitPrice,
       finalUnitPrice: l.finalUnitPrice,
@@ -149,16 +146,15 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
   try {
     await saveOrder(order);
   } catch (e) {
-    // Never strand reserved stock if the order can't be written.
+    // Never strand reserved stock (or an offer use) if the order can't be written.
     await releaseStock(order.lines);
+    await releaseOffer();
     throw e;
   }
 
-  if (order.offerCode) {
-    await Promise.all([bumpOfferStat(order.offerCode, "orders", 1), bumpOfferStat(order.offerCode, "revenue", order.total)]).catch(() => undefined);
-  }
+  if (order.offerCode) await bumpOfferStat(order.offerCode, "revenue", order.total).catch(() => undefined);
 
-  captureServer("order_placed", input.analyticsId || input.customerId || order.id, {
+  captureServer("order_placed", order.analyticsId, {
     order_id: order.id,
     revenue: order.total,
     subtotal: order.subtotal,
@@ -173,6 +169,9 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     state: order.customer.state,
     signed_in: !!order.customerId,
   });
+
+  // Confirmation + store alert, sent after the response (never blocks or fails the order).
+  notifyOrderPlaced(order);
 
   return { ok: true, order };
 }
@@ -220,18 +219,26 @@ async function transitionLocked(
     await saveOrder(updated); // mark first, so a crash can't cause a double restock
     await releaseStock(order.lines);
     if (order.offerCode) {
-      await Promise.all([bumpOfferStat(order.offerCode, "orders", -1), bumpOfferStat(order.offerCode, "revenue", -order.total)]).catch(() => undefined);
+      await Promise.all([
+        bumpOfferStat(order.offerCode, "orders", -1),
+        bumpOfferStat(order.offerCode, "revenue", -order.total),
+        order.payment.paidAt ? bumpOfferStat(order.offerCode, "paid", -1) : undefined,
+      ]).catch(() => undefined);
     }
     await logAudit({ by, action: `order.${next}`, target: order.id, detail: "Stock restored" }).catch(() => undefined);
-    captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.customerId || order.id, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
+    captureServer(next === "cancelled" ? "order_cancelled" : "order_refunded", order.analyticsId, { order_id: order.id, revenue: -order.total, currency: "NGN", by });
+    notifyOrderTransition(updated, order.status);
     return updated;
   }
 
   const saved = await saveOrder(updated);
+  if (next === "paid" && order.offerCode && !order.payment.paidAt) await bumpOfferStat(order.offerCode, "paid", 1).catch(() => undefined);
   await logAudit({ by, action: `order.${next}`, target: order.id, detail: opts.note }).catch(() => undefined);
   if (next === "paid" || next === "completed") {
-    captureServer(next === "paid" ? "order_paid" : "order_completed", order.customerId || order.id, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
+    captureServer(next === "paid" ? "order_paid" : "order_completed", order.analyticsId, { order_id: order.id, revenue: order.total, currency: "NGN", payment_method: order.payment.method });
   }
+  // Only reached on a real status change (the no-op case returned above), so each transition notifies once.
+  notifyOrderTransition(saved, order.status);
   return saved;
 }
 

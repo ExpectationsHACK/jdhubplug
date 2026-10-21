@@ -69,3 +69,18 @@ assert(n >= 1 && stockAfterSweep > stockBeforeSweep, `expired unpaid orders canc
 if (exp.ok) assert((await getOrder(exp.order.id))!.status === "cancelled", "expired order marked cancelled");
 // Paid orders are never swept
 if (o1.ok) { await transitionOrder(o1.order.id, "paid", "test", { paymentReference: "ref1" }); const p = await getOrder(o1.order.id); assert(p!.status === "paid" && !p!.reservedUntil && p!.payment.paidAt, "paid order clears reservation"); }
+if (o1.ok) { const st = await getOfferStats("phone10"); assert(st.paid === 1 && st.orders === 1, `paid offer use counted ${JSON.stringify(st)}`); }
+
+// Limited offer under concurrent checkouts: exactly one order gets the last use.
+await saveSettings({ ...(await getSettings()), reservationMinutes: 60 });
+await setStock("airpods-pro-2-1", 20);
+await saveOffer({ code: "LAST1", title: "t", headline: "h", description: "d", discount: { type: "percent", value: 5 }, scope: { type: "all" }, startsAt: new Date(now - 1000).toISOString(), endsAt: new Date(now + 86400000).toISOString(), active: true, usageLimit: 1, createdAt: "", updatedAt: "" });
+const race = await Promise.all(Array.from({ length: 6 }, () => placeOrder({ items: [{ productId: "airpods-pro-2-1", qty: 1 }], offerCode: "LAST1", customer: cust, delivery: "pickup", pickupHub: "Lagos", paymentMethod: "transfer" })));
+const winners = race.filter((r) => r.ok && r.order.offerCode === "last1");
+assert(winners.length === 1, `limited offer used exactly once under concurrency (${winners.length})`);
+assert((await getOfferStats("last1")).orders === 1, "offer counter matches the one use");
+// An unpaid order that's cancelled gives its use back.
+if (winners[0]?.ok) {
+  await transitionOrder(winners[0].order.id, "cancelled", "test");
+  assert((await getOfferStats("last1")).orders === 0, "cancelled unpaid order releases its offer use");
+}

@@ -1,10 +1,11 @@
 import "server-only";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { customerSignInAvailable, otpChannels, sendOtp } from "./otp";
+import { clientIp } from "./request-ip";
 import { CUSTOMER_COOKIE, CUSTOMER_TTL_SECONDS, signCustomerSession, verifyCustomerSession } from "./session";
-import { deleteOtp, findCustomer, getCustomer, getOtp, getSessionEpoch, getSettings, putOtp, rateLimit, saveCustomer } from "./store";
+import { deleteOtp, findCustomer, getCustomer, getOtp, getSessionEpoch, getSettings, putOtp, rateLimit, saveCustomer, withLock } from "./store";
 import type { Customer, OtpChannel } from "./types";
 
 // Passwordless customer accounts.
@@ -61,10 +62,6 @@ function safeEqual(a: string, b: string) {
   return diff === 0;
 }
 
-async function clientIp() {
-  const h = await headers();
-  return (h.get("x-forwarded-for")?.split(",")[0] || h.get("x-real-ip") || "unknown").trim();
-}
 
 export type RequestCodeResult =
   | { ok: true; channel: OtpChannel; display: string; devCode?: string }
@@ -103,38 +100,50 @@ export async function requestCode(input: string): Promise<RequestCodeResult> {
 
 export type VerifyCodeResult = { ok: true; customer: Customer; isNew: boolean } | { ok: false; error: string };
 
+/** Check a code against the stored hash; returns an error message, or null on a match (the code is then used up). */
+async function checkCode(key: string, code: string): Promise<string | null> {
+  const rec = await getOtp(key);
+  if (!rec || rec.exp < Date.now()) return "That code has expired. Request a new one.";
+  if (rec.attempts >= MAX_ATTEMPTS) {
+    await deleteOtp(key);
+    return "Too many wrong attempts. Request a new code.";
+  }
+  if (!safeEqual(await hashCode(key, code), rec.hash)) {
+    await putOtp(key, { ...rec, attempts: rec.attempts + 1 });
+    const left = MAX_ATTEMPTS - rec.attempts - 1;
+    return left > 0 ? `That code isn't right. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many wrong attempts. Request a new code.";
+  }
+  await deleteOtp(key);
+  return null;
+}
+
 export async function verifyCode(input: string, code: string): Promise<VerifyCodeResult> {
   const id = parseIdentifier(input);
   const clean = code.replace(/\D/g, "");
   if (!id || clean.length !== 6) return { ok: false, error: "Enter the 6-digit code we sent you." };
 
-  const rec = await getOtp(id.value);
-  if (!rec || rec.exp < Date.now()) return { ok: false, error: "That code has expired. Request a new one." };
-  if (rec.attempts >= MAX_ATTEMPTS) {
-    await deleteOtp(id.value);
-    return { ok: false, error: "Too many wrong attempts. Request a new code." };
-  }
-  if (!safeEqual(await hashCode(id.value, clean), rec.hash)) {
-    await putOtp(id.value, { ...rec, attempts: rec.attempts + 1 });
-    const left = MAX_ATTEMPTS - rec.attempts - 1;
-    return { ok: false, error: left > 0 ? `That code isn't right. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many wrong attempts. Request a new code." };
-  }
-  await deleteOtp(id.value);
+  // Checking a code is serialised per identifier, so parallel guesses can't all read
+  // the same attempt count and slip past the 5-attempt limit.
+  const checked = await withLock(`otp:${id.value}`, () => checkCode(id.value, clean));
+  if (checked) return { ok: false, error: checked };
 
   const now = new Date().toISOString();
-  let customer = await findCustomer(id.channel === "sms" ? { phone: id.value } : { email: id.value });
-  const isNew = !customer;
-  if (customer?.blocked) return { ok: false, error: "This account can't sign in. Please contact us on WhatsApp." };
-  customer = await saveCustomer(
-    customer
-      ? { ...customer, lastLoginAt: now }
-      : {
-          id: `C-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase(),
-          ...(id.channel === "sms" ? { phone: id.value } : { email: id.value }),
-          createdAt: now,
-          lastLoginAt: now,
-        },
-  );
+  const found = await findCustomer(id.channel === "sms" ? { phone: id.value } : { email: id.value });
+  if (found?.blocked) return { ok: false, error: "This account can't sign in. Please contact us on WhatsApp." };
+  const customer = found
+    ? await withLock(`customer:${found.id}`, async () => {
+        // Re-read inside the lock so a block applied meanwhile isn't overwritten.
+        const c = (await getCustomer(found.id)) ?? found;
+        return c.blocked ? null : saveCustomer({ ...c, lastLoginAt: now });
+      })
+    : await saveCustomer({
+        id: `C-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.toUpperCase(),
+        ...(id.channel === "sms" ? { phone: id.value } : { email: id.value }),
+        createdAt: now,
+        lastLoginAt: now,
+      });
+  if (!customer) return { ok: false, error: "This account can't sign in. Please contact us on WhatsApp." };
+  const isNew = !found;
 
   const token = await signCustomerSession({ sub: customer.id, ep: await getSessionEpoch() });
   (await cookies()).set(CUSTOMER_COOKIE, token, {
@@ -169,6 +178,10 @@ export async function signOutCustomer() {
 
 /** Save name / contact / delivery details the customer entered (e.g. at checkout). */
 export async function updateCustomerProfile(id: string, patch: Partial<Pick<Customer, "name" | "email" | "phone" | "address" | "city" | "state">>) {
+  return withLock(`customer:${id}`, () => applyProfile(id, patch));
+}
+
+async function applyProfile(id: string, patch: Partial<Pick<Customer, "name" | "email" | "phone" | "address" | "city" | "state">>) {
   const c = await getCustomer(id);
   if (!c) return null;
   const next: Customer = { ...c };
@@ -176,17 +189,13 @@ export async function updateCustomerProfile(id: string, patch: Partial<Pick<Cust
   if (patch.address) next.address = patch.address.slice(0, 200);
   if (patch.city) next.city = patch.city.slice(0, 60);
   if (patch.state) next.state = patch.state;
-  // Only fill in contact details we don't have yet; verified ones aren't overwritten
-  // and a phone/email can't be claimed if it already belongs to another account.
-  if (patch.email && !c.email) {
-    const email = patch.email.trim().toLowerCase();
-    const owner = await findCustomer({ email });
-    if (!owner || owner.id === c.id) next.email = email;
-  }
-  if (patch.phone && !c.phone) {
+  // Contact details typed at checkout are unverified: they're kept for prefilling only and
+  // never become the account's phone/email (those come only from a verified sign-in code),
+  // so nobody can claim someone else's number and see their orders.
+  if (patch.email && patch.email.trim().toLowerCase() !== c.email) next.contactEmail = patch.email.trim().toLowerCase().slice(0, 120);
+  if (patch.phone) {
     const phone = normalizePhone(patch.phone);
-    const owner = phone ? await findCustomer({ phone }) : null;
-    if (phone && (!owner || owner.id === c.id)) next.phone = phone;
+    if (phone && phone !== c.phone) next.contactPhone = phone;
   }
   return saveCustomer(next);
 }
