@@ -1,11 +1,20 @@
 import Link from "next/link";
+import type { Tone } from "@/lib/tones";
 import { waLink } from "@/lib/settings";
 import { CookieSettingsButton } from "./consent/ConsentBanner";
-import { Icon, WhatsAppGlyph } from "./Icon";
+import { Icon, WhatsAppGlyph, type IconName } from "./Icon";
 import { Logo } from "./Logo";
 
 // Fixed at build time; render-time clocks need a Suspense boundary under cacheComponents.
 const COPYRIGHT_YEAR = 2026;
+
+const COLUMN_TONE: Record<string, { tone: Tone; icon: IconName }> = {
+  Shop: { tone: "phones", icon: "store" },
+  "Sell & Swap": { tone: "sell", icon: "swap" },
+  "Trust & Safety": { tone: "trust", icon: "shield" },
+  Business: { tone: "gadgets", icon: "globe" },
+  Support: { tone: "swap", icon: "chat" },
+};
 
 const columns: { title: string; links: [string, string][] }[] = [
   {
@@ -63,7 +72,7 @@ export function Footer({ contact }: { contact: FooterContact }) {
     <footer className="mt-20 bg-footer text-[13px] text-ink-2">
       <div className="wrap py-12">
         {/* Contact strip: live from /admin/settings */}
-        <div className="mb-10 flex flex-col gap-4 rounded-tile bg-white p-6 md:flex-row md:items-center md:justify-between md:p-8">
+        <div data-tone="sell" className="aurora mb-10 flex flex-col gap-4 rounded-tile p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div>
             <p className="display text-[20px] text-ink md:text-[24px]">Questions before you buy?</p>
             <p className="mt-1 text-[14px]">Real people, replying in minutes. Mon–Sat, 8am–8pm.</p>
@@ -78,12 +87,12 @@ export function Footer({ contact }: { contact: FooterContact }) {
               <WhatsAppGlyph size={18} /> WhatsApp
             </a>
             {tel && (
-              <a href={`tel:${tel}`} className="btn btn-outline">
+              <a href={`tel:${tel}`} className="btn btn-outline bg-white">
                 <Icon name="phone" size={18} /> {contact.phone}
               </a>
             )}
             {contact.email && (
-              <a href={`mailto:${contact.email}`} className="btn btn-outline">
+              <a href={`mailto:${contact.email}`} className="btn btn-outline bg-white">
                 <Icon name="mail" size={18} /> Email
               </a>
             )}
@@ -92,8 +101,15 @@ export function Footer({ contact }: { contact: FooterContact }) {
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {columns.map((c) => (
-            <div key={c.title}>
-              <p className="mb-4 text-[14px] font-bold text-ink">{c.title}</p>
+            <div key={c.title} data-tone={COLUMN_TONE[c.title]?.tone}>
+              <p className="mb-4 flex items-center gap-2 text-[14px] font-bold text-ink">
+                {COLUMN_TONE[c.title] && (
+                  <span className="tone-badge h-7 w-7">
+                    <Icon name={COLUMN_TONE[c.title].icon} size={15} />
+                  </span>
+                )}
+                {c.title}
+              </p>
               <ul className="space-y-3">
                 {c.links.map(([label, href]) => (
                   <li key={label}>

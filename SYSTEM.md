@@ -177,6 +177,20 @@ Two independent systems with separate cookies and signing keys:
 
 See `.env.example`. The admin dashboard's **System health** card shows which are missing, without revealing values.
 
+## Product photos
+
+Each model has a Wikimedia Commons photo (`lib/models.ts`, credited on product pages and `/credits`). An image
+tries, in order (`productImageSources` in `lib/photos.ts`):
+
+1. A photo uploaded or pasted in the admin (`imageUrl`).
+2. Our own copy in `public/products/` (listed in `lib/photo-manifest.ts`).
+3. The direct Commons thumbnail on upload.wikimedia.org.
+4. The redirecting Commons URL.
+
+Commons rate-limits cloud servers and busy hotlinkers, so keep our own copies: run `npm run photos:fetch` from your
+own computer (it downloads each photo once, saves 480 px and 960 px WebP copies and updates the manifest), then
+commit `public/products/` and `lib/photo-manifest.ts`.
+
 ## Scheduled work
 
 `vercel.json` runs `/api/cron/sweep` daily at 03:00 UTC. It releases expired unpaid orders and sends pending

@@ -47,7 +47,7 @@ export function ScrollSpotlight({ product }: { product: Product }) {
         <div className="spot-body">
           <div className="spot-photo-wrap">
             <Link href={`/product/${product.id}`} className="spot-photo" aria-label={`View ${product.name}`}>
-              <ProductImage item={product} width={960} className="h-full w-full" artClassName="h-4/5 w-4/5" />
+              <ProductImage placeholder="shimmer" item={product} width={960} className="h-full w-full" artClassName="h-4/5 w-4/5" />
               <span aria-hidden className="spot-photo-gloss" />
             </Link>
           </div>

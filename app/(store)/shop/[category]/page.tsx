@@ -34,7 +34,7 @@ export default async function CategoryPage({ params }: PageProps<"/shop/[categor
 
   return (
     <PageTransition>
-      <PageHero trail={[["Home", "/"], ["Shop", "/shop"], [cat.name]]} eyebrow={cat.name} title={cat.tagline} body={cat.blurb}>
+      <PageHero tone={cat.slug} trail={[["Home", "/"], ["Shop", "/shop"], [cat.name]]} eyebrow={cat.name} title={cat.tagline} body={cat.blurb}>
         <PhotoCollage items={featuredIn(products, cat.slug, 5)} />
       </PageHero>
       <div className="wrap">

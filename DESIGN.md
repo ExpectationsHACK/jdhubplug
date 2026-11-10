@@ -7,8 +7,9 @@ proprietary typefaces (SamsungOne / Samsung Sharp Sans) and imagery are **not** 
 ## Principles
 
 1. **Product is the hero.** Devices sit on light-grey "stages" (`#f4f4f4`) with generous whitespace.
-2. **Monochrome first.** Black type and black pill CTAs on white. Colour appears only in product art, one accent
-   blue for active and focus states, sale red for offers and warnings, green for success and WhatsApp.
+2. **Colour by category.** White and black stay the base (black type, black pill CTAs). Each category and area has
+   its own colour, used for card tints, icon badges, banners, tabs and accents, so shoppers always know where they
+   are. Sale red is for offers and warnings, green for success and WhatsApp.
 3. **Tiles, not boxes.** Every surface is a 20px-radius tile. Cards, banners and explore modules share the shape.
 4. **Short, confident copy.** Headline, one line of support, two buttons.
 5. **Honest by design.** Ratings, badges, stock and seller details only show when real data backs them.
@@ -32,6 +33,27 @@ proprietary typefaces (SamsungOne / Samsung Sharp Sans) and imagery are **not** 
 
 Use them as Tailwind classes (`text-ink`, `bg-stage`, `border-line`, `rounded-tile`). Radius: tiles `20px`,
 chips and fields `12px`, buttons `9999px` (pill).
+
+### Category colours (`lib/tones.ts`, `--c-*` in `app/globals.css`)
+
+| Tone | Colour | Soft tint | Icon | Used for |
+| --- | --- | --- | --- | --- |
+| `phones` | `#1a5cff` | `#eaf0ff` | smartphone | Phones |
+| `accessories` | `#7c3aed` | `#f2ebff` | headphones | Accessories |
+| `gadgets` | `#0f766e` | `#e3f5f2` | laptop | Gadgets, business |
+| `cars` | `#c2410c` | `#fff0e5` | car | Cars |
+| `sell` | `#15803d` | `#e6f6ec` | wallet | Sell, payouts, contact |
+| `swap` | `#be185d` | `#fdeaf3` | swap | Swap and trade-up |
+| `trust` | `#4338ca` | `#ecebfd` | shield | Trust & safety, escrow |
+| `offers` | `#e5004b` | `#ffe8ef` | tag | Offers, Shop all |
+
+Each strong colour passes 4.5:1 on white for text. Set `data-tone="phones"` on a container and these classes pick it
+up: `tone-card` (tinted card with a coloured glow on hover), `tone-badge` (round icon badge that fills with colour
+on hover), `tone-chip` (small category label), `aurora` (banner with slowly drifting colour), `tone-text`,
+`bg-tone`, `bg-tone-soft`, `text-tone`. Product categories map to tones with `toneOf(category)`; rows of feature
+tiles use `toneAt(i)`.
+
+**Grades** are colour-coded the same everywhere (`GradePill`): Like New green, Great blue, Good amber, Fair orange.
 
 ## Typography
 
@@ -63,10 +85,16 @@ icons use 1.25px. The only filled mark is the WhatsApp glyph.
   *secondary outline left, primary filled right* ("Add to cart" · "Buy now").
 - **Text link** (`.link-cta`): bold, underlined, trailing chevron.
 - **Tabs** (`.tab`), **chips** (`.chip`, selected = 2px accent border), **fields** (`.field`).
-- **Global nav:** wordmark · categories · divider · Sell / Swap / Trust · search, wishlist, cart, account. A
-  dismissible black promo strip sits above (two lines at most on phones).
-- **Product card:** grey tile with an honest badge, wishlist heart, photo (illustration while loading), grade pill,
-  name, spec, real star rating only when reviews exist, location, price, "Add to cart" and a compare toggle.
+- **Global nav:** wordmark · categories · divider · Sell / Swap / Trust · search, wishlist, cart, account. Category
+  links take their colour on hover; the mega menu carries a colour bar and icon. A dismissible black promo strip
+  sits above (two lines at most on phones).
+- **Footer:** contact strip on a soft green backdrop; each link column has a coloured icon.
+- **Product card:** tile tinted with its category colour, honest badge (a pulsing "Hot deal"), wishlist heart, real
+  photo with a category chip, colour-coded grade pill, name, spec, real star rating only when reviews exist,
+  location, price, "Add to cart" and a compare toggle. Hover: lift, coloured glow and a light sweep.
+- **Feature tiles** (promises, how it works, buyer protection, escrow steps): tinted `tone-card` with a coloured
+  icon badge, a different tone per tile.
+- **Page banners** (`PageHero` with `tone`): drifting colour backdrop, icon badge, floating outline icons.
 - **Buy box:** brand, name, spec, rating link, save and compare, price and stock, grade explainer, seller tile,
   quantity, "Add to cart" · "Buy now", WhatsApp and swap actions, escrow note. Sold out shows "Notify me".
 - **Compare tray** pinned to the bottom while products are selected; **compare table** highlights differences.
@@ -77,13 +105,19 @@ icons use 1.25px. The only filled mark is the WhatsApp glyph.
 ## Motion (`components/motion/`)
 
 Reveal on scroll, product tilt, magnetic buttons, spotlight, product orbit, counters, marquee, page transitions,
-fly-to-cart. Every animation respects `prefers-reduced-motion`. Motion supports the product; it never blocks
+fly-to-cart, card glow and light sweep, icon pop on hover, drifting banner colour, floating banner icons, pulsing
+deal badges. Every animation respects `prefers-reduced-motion`. Motion supports the product; it never blocks
 input or delays content.
+
+**Photos, never mock-ups, in motion.** Product images show a soft shimmer while loading. Animations and showcases
+(`placeholder="shimmer"`) never show the drawn illustration; ordinary cards fall back to it only if every photo
+source fails. See SYSTEM.md, "Product photos".
 
 ## Admin
 
 Calm, dense and functional: white cards on a light-grey canvas, a left sidebar grouped Overview / Catalog / Sales /
-Admin with count badges, the same type and tokens as the store. Build pages from `components/admin/ui.tsx`
+Admin with count badges and a coloured icon per section, dashboard tiles with coloured icon badges, the same type
+and tokens as the store. Build pages from `components/admin/ui.tsx`
 (AdminPage, PageHeader, StatCard, Badge, EmptyState, tables) and `components/admin/orders/Dialog.tsx` for confirms.
 Destructive actions are red and ask for confirmation (typed for the most dangerous).
 

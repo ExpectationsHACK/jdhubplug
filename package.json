@@ -13,7 +13,8 @@
     "test:notify": "tsx --conditions=react-server scripts/test-notify.mts",
     "test:reviews": "tsx --conditions=react-server scripts/test-reviews.mts",
     "test:extras": "tsx --conditions=react-server scripts/test-extras.mts",
-    "test:tradein": "tsx --conditions=react-server scripts/test-tradein.mts"
+    "test:tradein": "tsx --conditions=react-server scripts/test-tradein.mts",
+    "photos:fetch": "tsx scripts/fetch-photos.mts"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.5.0",

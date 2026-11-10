@@ -44,6 +44,7 @@ export function ShowcaseTabs({ tabs }: { tabs: ShowcaseTab[] }) {
             tabIndex={tab === c.slug ? 0 : -1}
             onClick={() => setTab(c.slug)}
             onKeyDown={(e) => onKey(e, i)}
+            data-tone={c.slug}
             className="tab"
           >
             {c.name}

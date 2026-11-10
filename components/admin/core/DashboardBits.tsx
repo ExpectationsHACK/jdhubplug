@@ -16,6 +16,19 @@ const TONE = {
 export type TileTone = keyof typeof TONE;
 
 /** KPI tile. Linked tiles lift on hover; `i` staggers the entrance animation. */
+/** Colour per metric icon, so the dashboard reads at a glance (tones in globals.css). */
+const ICON_TONE: Partial<Record<AdminIconName, string>> = {
+  wallet: "sell",
+  activity: "phones",
+  receipt: "accessories",
+  clock: "cars",
+  truck: "gadgets",
+  layers: "offers",
+  box: "swap",
+  link: "trust",
+  inbox: "phones",
+};
+
 export function Tile({
   label,
   value,
@@ -40,8 +53,8 @@ export function Tile({
       <div className="flex items-start justify-between gap-3">
         <p className="text-[13px] font-bold text-muted">{label}</p>
         {icon && (
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-stage text-ink-2 transition-colors group-hover:bg-ink group-hover:text-white">
-            <AdminIcon name={icon} size={16} />
+          <span data-tone={ICON_TONE[icon] ?? "phones"} className="tone-badge h-9 w-9">
+            <AdminIcon name={icon} size={17} />
           </span>
         )}
       </div>

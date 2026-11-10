@@ -286,12 +286,13 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
                   className="orbit-link"
                 >
                   <span className="orbit-tile">
-                    <ProductImage item={p} width={500} priority={i < 6} className="h-full w-full" artClassName="h-4/5 w-4/5" />
+                    <ProductImage placeholder="shimmer" item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
                     <span aria-hidden className="orbit-gloss" />
                     <span aria-hidden className="orbit-shade" />
                   </span>
                   <span aria-hidden className="orbit-reflect">
-                    <ProductImage item={p} width={500} className="h-full w-full" artClassName="h-4/5 w-4/5" />
+                    {/* Same URL as the tile above, so the browser reuses the download. */}
+                    <ProductImage placeholder="shimmer" item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
                   </span>
                   <span className="orbit-label">
                     <span className="block truncate">{p.name}</span>
@@ -354,7 +355,7 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
         {items.slice(0, 8).map((p) => (
           <li key={p.id}>
             <Link href={`/product/${p.id}`} className="block overflow-hidden rounded-2xl bg-white">
-              <ProductImage item={p} width={330} className="aspect-square w-full" artClassName="h-4/5 w-4/5" />
+              <ProductImage placeholder="shimmer" item={p} width={330} className="aspect-square w-full" artClassName="h-4/5 w-4/5" />
             </Link>
             <p className="mt-2 truncate text-[12px] font-bold text-white/80">{p.name}</p>
           </li>

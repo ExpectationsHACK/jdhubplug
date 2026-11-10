@@ -32,6 +32,7 @@ export default async function SwapPage() {
     <>
       <PageHero
         trail={[["Home", "/"], ["Swap"]]}
+        tone="swap"
         eyebrow="Swap & trade up"
         title="Trade up. Pay only the difference."
         body="Value your current phone, pick your next one, and we roll one into the other. Escrow-protected end to end."

@@ -12,6 +12,24 @@ import { AdminIcon, type AdminIconName } from "./core/icons";
 
 export type NavGroup = "Overview" | "Catalog" | "Sales" | "Admin";
 
+/** Colour for each admin section's icon (tones from lib/tones.ts / globals.css). */
+const NAV_TONE: Record<string, string> = {
+  "/admin": "phones",
+  "/admin/products": "accessories",
+  "/admin/inventory": "gadgets",
+  "/admin/offers": "offers",
+  "/admin/alerts": "cars",
+  "/admin/orders": "phones",
+  "/admin/customers": "swap",
+  "/admin/requests": "sell",
+  "/admin/reviews": "cars",
+  "/admin/settings": "trust",
+  "/admin/notifications": "accessories",
+  "/admin/privacy": "gadgets",
+  "/admin/staff": "trust",
+  "/admin/activity": "swap",
+};
+
 export const ADMIN_NAV: { href: string; label: string; icon: AdminIconName; group: NavGroup; roles?: Role[] }[] = [
   { href: "/admin", label: "Dashboard", icon: "dashboard", group: "Overview" },
   { href: "/admin/products", label: "Products", icon: "box", group: "Catalog" },
@@ -119,11 +137,9 @@ export function AdminNav({
                         on ? "bg-ink text-white shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]" : "text-ink-2 hover:bg-stage hover:text-ink"
                       }`}
                     >
-                      <AdminIcon
-                        name={i.icon}
-                        size={19}
-                        className={`shrink-0 transition-transform duration-200 motion-safe:group-hover:scale-110 ${on ? "" : "text-muted group-hover:text-ink"}`}
-                      />
+                      <span data-tone={NAV_TONE[i.href]} className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-200 motion-safe:group-hover:scale-110 ${on ? "bg-white/15" : "bg-tone-soft text-tone"}`}>
+                        <AdminIcon name={i.icon} size={17} />
+                      </span>
                       <span className="flex-1 truncate">{i.label}</span>
                       <Suspense fallback={null}>
                         <NavBadge badges={badges} href={i.href} on={on} />

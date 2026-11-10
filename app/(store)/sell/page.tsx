@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toneAt } from "@/lib/tones";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
 import { PageHero } from "@/components/PageHero";
@@ -24,6 +25,7 @@ export default async function SellPage() {
     <>
       <PageHero
         trail={[["Home", "/"], ["Sell"]]}
+        tone="sell"
         eyebrow="Sell to JDHub"
         title="Sell in minutes. Get paid in 48 hours."
         body="A fair, graded cash offer for your iPhone today. Gadgets and cars quoted on WhatsApp."
@@ -37,10 +39,12 @@ export default async function SellPage() {
         <h2 className="display text-center text-[28px] md:text-[40px]">How selling works</h2>
         <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {how.map((h, i) => (
-            <li key={h.title} className="rounded-tile bg-stage p-6">
+            <li key={h.title} data-tone={toneAt(i)} className="tone-card shine group rounded-tile p-6">
               <div className="flex items-center justify-between">
-                <Icon name={h.icon} size={32} strokeWidth={1.25} />
-                <span className="display text-[32px] text-line">0{i + 1}</span>
+                <span className="tone-badge h-14 w-14">
+                  <Icon name={h.icon} size={28} strokeWidth={1.5} />
+                </span>
+                <span className="display tone-text text-[32px] opacity-30">0{i + 1}</span>
               </div>
               <h3 className="mt-5 text-[18px] font-bold">{h.title}</h3>
               <p className="mt-2 text-[14px] text-ink-2">{h.body}</p>

@@ -71,7 +71,8 @@ production keys.
 
 ## Still to do
 
-- Real product photography for listings (consistent studio shots instead of Commons photos).
+- Store the Commons photos on the site: run `npm run photos:fetch` from your own computer and commit the result
+  (see SYSTEM.md, "Product photos"). Longer term, real photos of each unit.
 - A verification provider for IMEI/VIN checks (the Trust page only checks the format today).
 - Accessibility audit with an automated scanner and real-device testing.
 - Vendor (third-party seller) accounts: `/vendors` is an early-access sign-up only.
