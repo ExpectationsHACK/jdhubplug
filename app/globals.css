@@ -1409,3 +1409,110 @@ body {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------- Home, livelier */
+
+/* Hero ring: each tile glows in its category colour and deals in on load. */
+.orbit-card[data-tone] .orbit-tile {
+  box-shadow:
+    0 30px 60px -22px rgba(0, 0, 0, 0.9),
+    0 0 0 2px color-mix(in srgb, var(--tone) 70%, #fff 10%),
+    0 0 38px -2px color-mix(in srgb, var(--tone) 75%, transparent);
+}
+.orbit-link {
+  animation: orbit-deal 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--n, 0) * 80ms + 150ms);
+}
+@keyframes orbit-deal {
+  from { opacity: 0; transform: translateY(60px) scale(0.6) rotate(-8deg); }
+}
+.orbit-link:hover .orbit-tile {
+  transform: translateY(-10px) scale(1.09) rotate(-1.5deg);
+}
+
+/* Sparks drifting up behind the ring. */
+.orbit-sparks {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.orbit-sparks i {
+  position: absolute;
+  bottom: -12px;
+  left: calc(mod(var(--n) * 37 + 11, 100) * 1%);
+  width: calc(3px + mod(var(--n), 3) * 2px);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: hsl(calc(215 + var(--n) * 23) 95% 72%);
+  box-shadow: 0 0 12px 2px hsl(calc(215 + var(--n) * 23) 95% 62% / 0.8);
+  opacity: 0;
+  animation: spark-rise calc(9s + mod(var(--n), 5) * 2.2s) linear infinite;
+  animation-delay: calc(var(--n) * -1.3s);
+}
+@keyframes spark-rise {
+  10% { opacity: 0.9; }
+  80% { opacity: 0.5; }
+  100% { transform: translate(calc((mod(var(--n), 3) - 1) * 60px), -105vh); opacity: 0; }
+}
+
+/* Headline: a slow sheen sweeps across the rotating word. */
+.swap-word.is-active .swap-char {
+  background: linear-gradient(100deg, #fff 30%, #9db8ff 45%, #fff 60%) 0 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation-name: word-sheen;
+  animation-duration: 5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes word-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: -50% 0; }
+}
+
+/* Quick links: icons float gently, out of step with each other. */
+.quick-link .tone-badge {
+  animation: bob 4.5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * -0.55s);
+}
+.quick-link:hover .tone-badge {
+  animation-play-state: paused;
+}
+
+/* Product photos settle in (a slow zoom-out) as their card scrolls into view. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal .product-card-media > * {
+      animation: photo-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+@keyframes photo-settle {
+  from { scale: 1.18; filter: saturate(0.6); }
+}
+
+/* Icon badges on feature tiles breathe softly. */
+.tone-card .tone-badge {
+  animation: badge-breathe 3.6s ease-in-out infinite;
+}
+@keyframes badge-breathe {
+  50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--tone) 12%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-link,
+  .orbit-sparks i,
+  .swap-word.is-active .swap-char,
+  .quick-link .tone-badge,
+  .tone-card .tone-badge {
+    animation: none;
+  }
+  .orbit-sparks {
+    display: none;
+  }
+}

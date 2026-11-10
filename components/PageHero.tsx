@@ -91,7 +91,7 @@ export function PhotoCollage({ items, className = "" }: { items: Product[]; clas
           >
             <Link href={`/product/${p.id}`} className="group block" aria-label={p.name}>
               <span className="collage-float block overflow-hidden rounded-2xl bg-white shadow-[0_20px_40px_-16px_rgba(0,0,0,0.35)]">
-                <ProductImage placeholder="shimmer"
+                <ProductImage
                   item={p}
                   width={330}
                   priority
