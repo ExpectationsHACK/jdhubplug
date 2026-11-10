@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
     name: item.name,
     description: item.spec,
     sku: item.id,
-    ...(image ? { image: [image] } : {}),
+    ...(image ? { image: [image.startsWith("/") ? absoluteUrl(image) : image] } : {}),
     brand: { "@type": "Brand", name: item.brand },
     category: cat.name,
     itemCondition: "https://schema.org/UsedCondition",
@@ -161,8 +161,10 @@ export default async function ProductPage({ params }: PageProps<"/product/[id]">
               b: `${settings.hubs.map((h) => h.city).join(", ").replace(/, ([^,]*)$/, " and $1")} hubs for pickup and in-person checks.`,
             },
           ].map((x, i) => (
-            <Reveal key={x.t} index={i} className="rounded-tile bg-stage p-6">
-              <Icon name={x.icon} size={32} strokeWidth={1.25} />
+            <Reveal key={x.t} index={i} data-tone={(["trust", "swap", "sell"] as const)[i % 3]} className="tone-card shine group rounded-tile p-6">
+              <span className="tone-badge h-12 w-12">
+                <Icon name={x.icon} size={24} strokeWidth={1.5} />
+              </span>
               <h3 className="mt-4 text-[17px] font-bold">{x.t}</h3>
               <p className="mt-1 text-[14px] text-ink-2">{x.b}</p>
             </Reveal>

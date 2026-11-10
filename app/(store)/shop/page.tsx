@@ -24,6 +24,7 @@ export default async function ShopPage() {
     <PageTransition>
       <PageHero
         trail={[["Home", "/"], ["Shop"]]}
+        tone="offers"
         title="Shop all"
         body="Phones, accessories, gadgets and cars. Every listing graded, every order escrow-protected."
       >

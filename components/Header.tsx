@@ -1,5 +1,6 @@
 "use client";
 
+import { TONE_ICON, toneOf } from "@/lib/tones";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -99,7 +100,7 @@ export function Header({
           <Logo />
           <nav aria-label="Main" className="hidden h-full flex-1 items-stretch gap-1 lg:flex">
             {categories.map((c) => (
-              <div key={c.slug} className="flex items-stretch" onMouseEnter={() => setOpen(c.slug)}>
+              <div key={c.slug} data-tone={c.slug} className="flex items-stretch" onMouseEnter={() => setOpen(c.slug)}>
                 <Link
                   href={`/shop/${c.slug}`}
                   aria-expanded={open === c.slug}
@@ -163,10 +164,16 @@ export function Header({
 function MegaMenu({ cat, onNavigate }: { cat: NavCategory; onNavigate: () => void }) {
   const slug = cat.slug;
   return (
-    <div className="mega-in absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_12px_24px_rgba(0,0,0,0.06)] lg:block">
+    <div data-tone={toneOf(slug)} className="mega-in absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-[0_12px_24px_rgba(0,0,0,0.06)] lg:block">
+      <div aria-hidden className="h-1 bg-tone" />
       <div className="wrap grid grid-cols-[220px_1fr] gap-10 py-8">
         <div>
-          <p className="mb-4 text-[13px] font-bold uppercase tracking-wider text-muted">Shop by brand</p>
+          <p className="mb-4 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wider text-tone">
+            <span className="tone-badge h-8 w-8">
+              <Icon name={TONE_ICON[toneOf(slug)]} size={16} />
+            </span>
+            Shop by brand
+          </p>
           <ul className="space-y-3">
             {cat.brands.map((b) => (
               <li key={b}>
@@ -177,7 +184,7 @@ function MegaMenu({ cat, onNavigate }: { cat: NavCategory; onNavigate: () => voi
             ))}
           </ul>
           <div className="mt-6 space-y-2 border-t border-line pt-5 text-[14px]">
-            <Link href={`/shop/${slug}`} onClick={onNavigate} className="link-cta">
+            <Link href={`/shop/${slug}`} onClick={onNavigate} className="link-cta text-tone">
               Shop all {cat.name.toLowerCase()} <Icon name="chevronRight" size={16} />
             </Link>
             <br />
@@ -377,9 +384,13 @@ function Drawer({ categories, onClose }: { categories: NavCategory[]; onClose: (
             <>
               <ul className="border-b border-line">
                 {categories.map((c) => (
-                  <li key={c.slug}>
-                    <button onClick={() => setSub(c.slug)} className="flex w-full items-center justify-between py-4 text-[17px] font-bold">
-                      {c.name} <Icon name="chevronRight" size={20} />
+                  <li key={c.slug} data-tone={toneOf(c.slug)}>
+                    <button onClick={() => setSub(c.slug)} className="group flex w-full items-center gap-3 py-3 text-[17px] font-bold">
+                      <span className="tone-badge h-10 w-10">
+                        <Icon name={TONE_ICON[toneOf(c.slug)]} size={20} />
+                      </span>
+                      <span className="flex-1 text-left">{c.name}</span>
+                      <Icon name="chevronRight" size={20} />
                     </button>
                   </li>
                 ))}

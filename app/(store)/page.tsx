@@ -11,26 +11,27 @@ import { Reveal, RevealText } from "@/components/motion/Reveal";
 import { ScrollSpotlight } from "@/components/motion/ScrollSpotlight";
 import { ShowcaseTabs } from "@/components/ShowcaseTabs";
 import { categories, grades } from "@/lib/reference";
+import type { Tone } from "@/lib/tones";
 import type { CategorySlug, Product } from "@/lib/types";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-const quickLinks:{ label: string; href: string; icon: IconName }[] = [
-  { label: "Phones", href: "/shop/phones", icon: "smartphone" },
-  { label: "Accessories", href: "/shop/accessories", icon: "headphones" },
-  { label: "Gadgets", href: "/shop/gadgets", icon: "laptop" },
-  { label: "Cars", href: "/shop/cars", icon: "car" },
-  { label: "Sell", href: "/sell", icon: "wallet" },
-  { label: "Swap", href: "/swap", icon: "swap" },
-  { label: "IMEI check", href: "/trust#verify", icon: "scan" },
-  { label: "Offers", href: "/shop", icon: "tag" },
+const quickLinks: { label: string; href: string; icon: IconName; tone: Tone }[] = [
+  { label: "Phones", href: "/shop/phones", icon: "smartphone", tone: "phones" },
+  { label: "Accessories", href: "/shop/accessories", icon: "headphones", tone: "accessories" },
+  { label: "Gadgets", href: "/shop/gadgets", icon: "laptop", tone: "gadgets" },
+  { label: "Cars", href: "/shop/cars", icon: "car", tone: "cars" },
+  { label: "Sell", href: "/sell", icon: "wallet", tone: "sell" },
+  { label: "Swap", href: "/swap", icon: "swap", tone: "swap" },
+  { label: "IMEI check", href: "/trust#verify", icon: "scan", tone: "trust" },
+  { label: "Offers", href: "/shop", icon: "tag", tone: "offers" },
 ];
 
-const promises: { icon: IconName; title: string; body: string }[] = [
-  { icon: "shield", title: "Escrow on every order", body: "Your money is held until you confirm the item arrived as described." },
-  { icon: "checkCircle", title: "One grading standard", body: "Like New, Great, Good or Fair. The same four grades across every category." },
-  { icon: "scan", title: "IMEI & VIN verified", body: "Every phone and car is checked against blacklists before it can list." },
-  { icon: "wallet", title: "Paid within 48 hours", body: "Sell to JDHub and get your money within two days of inspection." },
+const promises: { icon: IconName; title: string; body: string; tone: Tone }[] = [
+  { icon: "shield", title: "Escrow on every order", body: "Your money is held until you confirm the item arrived as described.", tone: "trust" },
+  { icon: "checkCircle", title: "One grading standard", body: "Like New, Great, Good or Fair. The same four grades across every category.", tone: "phones" },
+  { icon: "scan", title: "IMEI & VIN verified", body: "Every phone and car is checked against blacklists before it can list.", tone: "accessories" },
+  { icon: "wallet", title: "Paid within 48 hours", body: "Sell to JDHub and get your money within two days of inspection.", tone: "sell" },
 ];
 
 /** The most impressive in-stock phone with a photo, for the scroll spotlight. */
@@ -87,9 +88,9 @@ export default async function Home() {
       <nav aria-label="Quick links" className="wrap">
         <ul className="no-scrollbar flex gap-4 overflow-x-auto py-10 md:justify-center md:gap-8">
           {quickLinks.map((q, i) => (
-            <li key={q.label} className="quick-link shrink-0" style={{ "--i": i } as CSSProperties}>
+            <li key={q.label} data-tone={q.tone} className="quick-link shrink-0" style={{ "--i": i } as CSSProperties}>
               <Link href={q.href} className="group flex w-20 flex-col items-center gap-3 rounded-xl text-center">
-                <span className="grid h-16 w-16 place-items-center rounded-full bg-stage transition-[background-color,color,transform] duration-300 group-hover:-translate-y-1 group-hover:bg-ink group-hover:text-white">
+                <span className="tone-badge h-16 w-16 group-hover:-translate-y-1">
                   <Icon name={q.icon} size={28} />
                 </span>
                 <span className="text-[13px] font-bold">{q.label}</span>
@@ -163,8 +164,10 @@ export default async function Home() {
         </p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {promises.map((p, i) => (
-            <Reveal key={p.title} index={i} className="promise rounded-tile border border-line p-6">
-              <Icon name={p.icon} size={36} strokeWidth={1.25} />
+            <Reveal key={p.title} index={i} data-tone={p.tone} className="promise tone-card shine group rounded-tile p-6">
+              <span className="tone-badge h-14 w-14">
+                <Icon name={p.icon} size={28} strokeWidth={1.5} />
+              </span>
               <h3 className="mt-5 text-[18px] font-bold">{p.title}</h3>
               <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{p.body}</p>
             </Reveal>
@@ -203,7 +206,7 @@ export default async function Home() {
       <section className="wrap pt-24" aria-label="Shop by category">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categories.map((c, i) => (
-            <CategoryTile key={c.slug} index={i} href={`/shop/${c.slug}`} name={c.name} tagline={c.tagline} item={top(c.slug, 1)[0]} art={c.art} />
+            <CategoryTile key={c.slug} tone={c.slug} index={i} href={`/shop/${c.slug}`} name={c.name} tagline={c.tagline} item={top(c.slug, 1)[0]} art={c.art} />
           ))}
         </div>
       </section>

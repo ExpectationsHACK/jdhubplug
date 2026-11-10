@@ -11,10 +11,12 @@ import { RatingInline } from "./reviews/Stars";
 import { badgeOf, sellerOf } from "@/lib/seller";
 import { CompareToggle } from "./compare/CompareToggle";
 import { WishlistButton } from "./wishlist/WishlistButton";
+import { TONE_ICON, TONE_LABEL, toneOf } from "@/lib/tones";
 
+/** Grade label, colour-coded the same way everywhere (green Like New → orange Fair). */
 export function GradePill({ grade }: { grade: Product["grade"] }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-[12px] font-bold text-ink-2">
+    <span data-grade={grade} className="grade-pill inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold">
       {gradeLabel(grade)}
     </span>
   );
@@ -32,11 +34,12 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
   const soldOut = item.stock <= 0;
   const badge = badgeOf(item);
   const seller = sellerOf(item);
+  const tone = toneOf(item.category);
   return (
-    <div className="reveal h-full" style={{ "--i": index % 4 } as CSSProperties}>
+    <div className="reveal h-full" data-tone={tone} style={{ "--i": index % 4 } as CSSProperties}>
       <Tilt
         data-product-card
-        className="product-card group flex h-full flex-col rounded-tile bg-stage p-3 sm:p-5"
+        className="product-card tone-card shine group flex h-full flex-col rounded-tile p-3 sm:p-5"
       >
         <div className="relative z-[1] flex min-h-6 items-start justify-between">
           {soldOut ? (
@@ -44,7 +47,7 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
           ) : badge ? (
             <span
               className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                badge === "Hot deal" ? "bg-sale text-white" : "bg-white text-ink"
+                badge === "Hot deal" ? "pulse-ring bg-sale text-white" : "bg-white text-ink"
               }`}
             >
               {badge}
@@ -70,6 +73,10 @@ export function ProductCard({ item, index = 0 }: { item: Product; index?: number
               artClassName="h-3/4 w-3/4"
             />
           </ViewTransition>
+          <span className="tone-chip absolute bottom-2 left-2 z-[1]">
+            <Icon name={TONE_ICON[tone]} size={13} />
+            {TONE_LABEL[tone]}
+          </span>
           {soldOut && (
             <span className="absolute inset-0 grid place-items-center bg-white/30">
               <span className="rounded-full bg-ink/85 px-4 py-2 text-[13px] font-bold tracking-wide text-white">Sold out</span>

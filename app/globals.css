@@ -18,7 +18,39 @@
   --sale: #e5004b;
   --ok: #0a8a4a;
   --wa: #25d366;
+
+  /* Category colours (lib/tones.ts). Each strong colour passes 4.5:1 on white for text;
+     each soft tint is a backdrop for cards, badges and banners. */
+  --c-phones: #1a5cff;
+  --c-phones-soft: #eaf0ff;
+  --c-accessories: #7c3aed;
+  --c-accessories-soft: #f2ebff;
+  --c-gadgets: #0f766e;
+  --c-gadgets-soft: #e3f5f2;
+  --c-cars: #c2410c;
+  --c-cars-soft: #fff0e5;
+  --c-sell: #15803d;
+  --c-sell-soft: #e6f6ec;
+  --c-swap: #be185d;
+  --c-swap-soft: #fdeaf3;
+  --c-trust: #4338ca;
+  --c-trust-soft: #ecebfd;
+  --c-offers: #e5004b;
+  --c-offers-soft: #ffe8ef;
+
+  /* The active tone. Set per container with data-tone="phones" etc. */
+  --tone: var(--accent);
+  --tone-soft: #eef3ff;
 }
+
+[data-tone="phones"] { --tone: var(--c-phones); --tone-soft: var(--c-phones-soft); }
+[data-tone="accessories"] { --tone: var(--c-accessories); --tone-soft: var(--c-accessories-soft); }
+[data-tone="gadgets"] { --tone: var(--c-gadgets); --tone-soft: var(--c-gadgets-soft); }
+[data-tone="cars"] { --tone: var(--c-cars); --tone-soft: var(--c-cars-soft); }
+[data-tone="sell"] { --tone: var(--c-sell); --tone-soft: var(--c-sell-soft); }
+[data-tone="swap"] { --tone: var(--c-swap); --tone-soft: var(--c-swap-soft); }
+[data-tone="trust"] { --tone: var(--c-trust); --tone-soft: var(--c-trust-soft); }
+[data-tone="offers"] { --tone: var(--c-offers); --tone-soft: var(--c-offers-soft); }
 
 @theme inline {
   --color-ink: var(--ink);
@@ -33,6 +65,8 @@
   --color-sale: var(--sale);
   --color-ok: var(--ok);
   --color-wa: var(--wa);
+  --color-tone: var(--tone);
+  --color-tone-soft: var(--tone-soft);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
   --radius-tile: 20px;
@@ -322,6 +356,16 @@ body {
 .nav-link:hover::after,
 .nav-link.is-open::after {
   transform: scaleX(1);
+}
+/* Category links take their colour on hover and when their menu is open. */
+[data-tone] > .nav-link::after {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--tone);
+}
+[data-tone] > .nav-link:hover,
+[data-tone] > .nav-link.is-open {
+  color: var(--tone);
 }
 .icon-btn {
   transition: background-color 0.2s, transform 0.2s;
@@ -1179,5 +1223,189 @@ body {
   .collage-card,
   .collage-float {
     animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ Colour tones
+ * Containers set data-tone (see lib/tones.ts); everything below reads --tone and
+ * --tone-soft, so one attribute recolours a card, banner or icon badge. */
+
+/* Round icon badge: soft tint with a coloured icon; fills with the colour on hover. */
+.tone-badge {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+}
+.group:hover .tone-badge,
+.tone-badge:where(a, button):hover {
+  background: var(--tone);
+  color: #fff;
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+.group:hover .tone-badge > svg {
+  animation: icon-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes icon-pop {
+  30% { transform: scale(1.2) rotate(-8deg); }
+  60% { transform: scale(0.95) rotate(4deg); }
+}
+
+/* Tinted card: the tone's soft colour washes into the grey stage; a coloured glow and
+   a light sweep on hover. */
+.tone-card {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(165deg, var(--tone-soft) 0%, var(--stage) 62%);
+  transition: box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tone-card:hover {
+  box-shadow: 0 28px 50px -24px color-mix(in srgb, var(--tone) 45%, transparent), 0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+.tone-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--tone) 14%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.tone-card:hover::before {
+  opacity: 1;
+}
+.shine {
+  overflow: hidden;
+}
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.55) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+.shine:hover::after {
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateX(120%);
+}
+
+/* Small category chip on product cards. */
+.tone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, #fff 80%, var(--tone-soft));
+  color: var(--tone);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px 3px 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Banner backdrop: slow drifting blobs of the tone colour. */
+.aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--tone-soft);
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.aurora::before {
+  top: -30%;
+  left: -10%;
+  background: var(--tone);
+  animation: aurora-a 14s ease-in-out infinite alternate;
+}
+.aurora::after {
+  bottom: -40%;
+  right: -10%;
+  background: color-mix(in srgb, var(--tone) 55%, #fff);
+  animation: aurora-b 18s ease-in-out infinite alternate;
+}
+@keyframes aurora-a {
+  to { transform: translate(25%, 15%) scale(1.15); }
+}
+@keyframes aurora-b {
+  to { transform: translate(-20%, -10%) scale(0.9); }
+}
+
+/* Floating icon decorations in banners. */
+.float-icon {
+  position: absolute;
+  color: var(--tone);
+  opacity: 0.18;
+  pointer-events: none;
+  animation: bob 7s ease-in-out infinite;
+  animation-delay: calc(var(--o, 0) * -1.7s);
+}
+
+/* Grade pills: one colour per grade, the same everywhere. */
+.grade-pill { border: 1px solid transparent; }
+.grade-pill[data-grade="like-new"] { background: #e6f6ec; color: #15803d; border-color: #c3e9d0; }
+.grade-pill[data-grade="great"] { background: #eaf0ff; color: #1a4fd6; border-color: #cddbff; }
+.grade-pill[data-grade="good"] { background: #fff4e0; color: #b45309; border-color: #fbe0b0; }
+.grade-pill[data-grade="fair"] { background: #fff0e5; color: #c2410c; border-color: #fdd5bb; }
+
+/* Pulsing ring for live deal badges. */
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--sale) 55%, transparent);
+  animation: pulse-ring 2.2s ease-out infinite;
+}
+@keyframes pulse-ring {
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Coloured underline for section eyebrows and active tabs. */
+.tone-text { color: var(--tone); }
+.tab[aria-selected="true"][data-tone] {
+  color: var(--tone);
+}
+.tab[aria-selected="true"][data-tone]::after {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--tone);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .float-icon,
+  .pulse-ring::after,
+  .group:hover .tone-badge > svg {
+    animation: none;
+  }
+  .shine::after {
+    display: none;
+  }
+  .tone-card,
+  .tone-badge {
+    transition: none;
   }
 }

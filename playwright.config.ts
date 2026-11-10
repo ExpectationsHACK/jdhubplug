@@ -21,6 +21,8 @@ export default defineConfig({
     // Visitors who already answered the cookie banner (analytics declined), so it doesn't cover the page.
     storageState: "e2e/consented.json",
     screenshot: "only-on-failure",
+    // Optional: a preinstalled Chromium when the runner's own browser build isn't there.
+    ...(process.env.PW_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } } : {}),
   },
   projects: [
     { name: "setup", testMatch: /admin\.setup\.ts/ },

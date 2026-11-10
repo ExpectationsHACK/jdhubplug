@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toneAt } from "@/lib/tones";
 import { featuredIn, getStorefront } from "@/components/home/storefront";
 import { Icon, WhatsAppGlyph, type IconName } from "@/components/Icon";
 import { LeadForm } from "@/components/LeadForm";
@@ -38,6 +39,7 @@ export default async function VendorsPage() {
     <PageTransition>
       <PageHero
         trail={[["Home", "/"], ["Sell on JDHub"]]}
+        tone="gadgets"
         eyebrow="JDHub for Business · Early access"
         title="Sell to buyers who already trust the grade."
         body="We're opening JDHub to a small number of vetted partners. Today everything on JDHub is our own inspected stock; apply and our team will talk you through how partner listings will work."
@@ -51,8 +53,10 @@ export default async function VendorsPage() {
       <section id="dashboard" className="wrap scroll-mt-24">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {perks.map((p, i) => (
-            <Reveal key={p.title} index={i} className="rounded-tile bg-stage p-6">
-              <Icon name={p.icon} size={34} strokeWidth={1.25} />
+            <Reveal key={p.title} index={i} data-tone={toneAt(i)} className="tone-card shine group rounded-tile p-6">
+              <span className="tone-badge h-14 w-14">
+                <Icon name={p.icon} size={28} strokeWidth={1.5} />
+              </span>
               <h3 className="mt-4 text-[18px] font-bold">{p.title}</h3>
               <p className="mt-2 text-[14px] text-ink-2">{p.body}</p>
             </Reveal>

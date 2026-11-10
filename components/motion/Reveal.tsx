@@ -12,6 +12,7 @@ export function Reveal({
   style,
   children,
   id,
+  "data-tone": tone,
 }: {
   as?: ElementType;
   index?: number;
@@ -19,9 +20,11 @@ export function Reveal({
   style?: CSSProperties;
   children: ReactNode;
   id?: string;
+  /** Colour tone for the revealed block (see lib/tones.ts). */
+  "data-tone"?: string;
 }) {
   return (
-    <Tag id={id} className={`reveal ${className}`} style={{ ...style, "--i": index } as CSSProperties}>
+    <Tag id={id} data-tone={tone} className={`reveal ${className}`} style={{ ...style, "--i": index } as CSSProperties}>
       {children}
     </Tag>
   );

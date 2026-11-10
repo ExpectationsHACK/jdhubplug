@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Tone } from "@/lib/tones";
 import { getLegalContent } from "@/lib/legal-store";
 import { getStorefront, modelReps } from "@/components/home/storefront";
 import { Icon, WhatsAppGlyph, type IconName } from "@/components/Icon";
@@ -16,6 +17,8 @@ export const metadata: Metadata = {
     "Escrow on every order, one grading standard and IMEI/VIN checks on everything we sell. How JDHub keeps trade safe in Nigeria.",
   alternates: { canonical: "/trust" },
 };
+
+const STEP_TONES: Tone[] = ["trust", "phones", "sell", "swap"];
 
 const escrowSteps = (days: number): { icon: IconName; title: string; body: string }[] => [
   { icon: "wallet", title: "You pay into escrow", body: "Your money is held in a protected account until you confirm the item." },
@@ -39,6 +42,7 @@ export default async function TrustPage() {
     <PageTransition>
       <PageHero
         trail={[["Home", "/"], ["Trust & Safety"]]}
+        tone="trust"
         eyebrow="Trust & Safety"
         title="Nobody has to go first."
         body="Escrow on every order, one grading standard, and IMEI and VIN checks on every phone and car we sell."
@@ -48,9 +52,11 @@ export default async function TrustPage() {
         <RevealText text="Escrow, on every order" className="display text-[28px] md:text-[36px]" />
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {escrow.map((s, i) => (
-            <Reveal as="li" key={s.title} index={i} className="relative rounded-tile border border-line p-6">
-              <span className="text-[13px] font-bold text-accent">Step {i + 1}</span>
-              <Icon name={s.icon} size={34} strokeWidth={1.25} className="mt-4" />
+            <Reveal as="li" key={s.title} index={i} data-tone={STEP_TONES[i % STEP_TONES.length]} className="tone-card shine group relative rounded-tile p-6">
+              <span className="tone-text text-[13px] font-bold">Step {i + 1}</span>
+              <span className="tone-badge mt-4 h-14 w-14">
+                <Icon name={s.icon} size={28} strokeWidth={1.5} />
+              </span>
               <h3 className="mt-4 text-[18px] font-bold">{s.title}</h3>
               <p className="mt-2 text-[14px] text-ink-2">{s.body}</p>
             </Reveal>
@@ -115,8 +121,10 @@ export default async function TrustPage() {
 
       <section id="disputes" className="wrap scroll-mt-24 pt-20">
         <div className="grid gap-4 md:grid-cols-2">
-          <Reveal className="rounded-tile bg-stage p-8 md:p-10">
-            <Icon name="chat" size={36} strokeWidth={1.25} />
+          <Reveal data-tone="trust" className="tone-card group rounded-tile p-8 md:p-10">
+            <span className="tone-badge h-14 w-14">
+              <Icon name="chat" size={28} strokeWidth={1.5} />
+            </span>
             <h2 className="display mt-4 text-[26px]">Resolve a dispute</h2>
             <p className="mt-3 text-ink-2">
               Item not as described? Open a case within {legal.returnDays} day{legal.returnDays === 1 ? "" : "s"} of delivery. JDHub reviews photos from both sides and decides
