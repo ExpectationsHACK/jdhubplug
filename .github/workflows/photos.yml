@@ -31,6 +31,7 @@ jobs:
       - run: npm ci
       - run: npx tsx scripts/fetch-photos.mts
       - name: Commit photos
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -39,5 +40,6 @@ jobs:
             echo "No new photos."
           else
             git commit -m "Store product photos on the site ($(ls public/products | wc -l) files)"
+            git pull --rebase --autostash -q
             git push
           fi
