@@ -7,10 +7,9 @@ import { DeviceArt } from "./DeviceArt";
 
 /**
  * Product photo (uploaded URL or Wikimedia Commons). Tries the direct Commons thumbnail
- * first, then the redirecting URL, showing a soft shimmer while it loads (never a drawn
- * mock-up). If every source fails:
- * - placeholder "art": the vector illustration, so a product card is never blank;
- * - placeholder "shimmer": a plain tile (animations and showcases show real photos only).
+ * our own stored copy first, then Commons, showing a soft shimmer while it loads (never
+ * a drawn mock-up). Only if every source fails does it fall back to the illustration,
+ * so a tile is never left blank.
  */
 export function ProductImage({
   item,
@@ -18,14 +17,12 @@ export function ProductImage({
   className = "",
   artClassName = "h-3/4 w-3/4",
   priority = false,
-  placeholder = "art",
 }: {
   item: Pick<Product, "photo" | "imageUrl" | "art" | "tint" | "name">;
   width?: number;
   className?: string;
   artClassName?: string;
   priority?: boolean;
-  placeholder?: "art" | "shimmer";
 }) {
   const sources = productImageSources(item, width);
   const [attempt, setAttempt] = useState(0);
@@ -41,16 +38,13 @@ export function ProductImage({
     else setLoaded(true);
   }, [src]);
 
+  // Every source failed (or there is none): the illustration, so a tile is never blank.
   if (!src) {
     return (
       <div className={`relative ${className}`} role="img" aria-label={item.name}>
-        {placeholder === "art" ? (
-          <div className="absolute inset-0 grid place-items-center">
-            <DeviceArt kind={item.art} tint={item.tint} className={artClassName} />
-          </div>
-        ) : (
-          <div aria-hidden className="absolute inset-0 bg-stage" />
-        )}
+        <div className="absolute inset-0 grid place-items-center">
+          <DeviceArt kind={item.art} tint={item.tint} className={artClassName} />
+        </div>
       </div>
     );
   }

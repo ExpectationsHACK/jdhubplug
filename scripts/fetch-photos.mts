@@ -25,24 +25,25 @@ const force = process.argv.includes("--force");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function download(file: string): Promise<Buffer> {
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const res = await fetch(photoUrl(file, 1280), { headers: { "User-Agent": USER_AGENT }, redirect: "follow" });
     if (res.ok) return Buffer.from(await res.arrayBuffer());
     if (res.status === 429 || res.status >= 500) {
-      const wait = Number(res.headers.get("retry-after")) * 1000 || 2000 * 2 ** attempt;
+      const wait = Math.min(Number(res.headers.get("retry-after")) * 1000 || 2000 * 2 ** attempt, 20_000);
       console.log(`  ${res.status}, waiting ${Math.round(wait / 1000)}s`);
       await sleep(wait);
       continue;
     }
     throw new Error(`HTTP ${res.status}`);
   }
-  throw new Error("gave up after 5 attempts");
+  throw new Error("gave up after 3 attempts");
 }
 
 mkdirSync(OUT, { recursive: true });
 const files = [...new Set(models.map((m) => m.photo).filter(Boolean))] as string[];
 const done: string[] = [];
 const failed: string[] = [];
+let streak = 0; // consecutive failures: Commons is refusing this machine, so stop early
 
 for (const [i, file] of files.entries()) {
   const name = localPhotoName(file);
@@ -58,9 +59,14 @@ for (const [i, file] of files.entries()) {
       await sharp(original).rotate().resize({ width: w, withoutEnlargement: true }).webp({ quality: 78 }).toFile(targets[k]);
     }
     done.push(file);
+    streak = 0;
   } catch (e) {
     console.warn(`  skipped: ${e instanceof Error ? e.message : e}`);
     failed.push(file);
+    if (++streak >= 6) {
+      console.warn("\nSix failures in a row: Commons is refusing this machine. Stopping; run again later or from another network.");
+      break;
+    }
   }
   await sleep(1000); // be gentle with Commons
 }

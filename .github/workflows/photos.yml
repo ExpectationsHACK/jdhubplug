@@ -1,0 +1,45 @@
+name: Fetch product photos
+
+# Downloads each model's Wikimedia Commons photo once, stores WebP copies in
+# public/products/ and commits them, so the site serves its own photos.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - scripts/fetch-photos.mts
+      - .github/workflows/photos.yml
+      - lib/models.ts
+
+permissions:
+  contents: write
+
+concurrency:
+  group: photos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/fetch-photos.mts
+      - name: Commit photos
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/products lib/photo-manifest.ts
+          if git diff --cached --quiet; then
+            echo "No new photos."
+          else
+            git commit -m "Store product photos on the site ($(ls public/products | wc -l) files)"
+            git pull --rebase --autostash -q
+            git push
+          fi

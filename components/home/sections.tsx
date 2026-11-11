@@ -25,7 +25,7 @@ export function BrandMarquee({ items }: { items: { brand: string; product?: Prod
         >
           <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-stage">
             {product ? (
-              <ProductImage placeholder="shimmer" item={product} width={120} className="h-full w-full transition-transform duration-500 group-hover:scale-110" artClassName="h-9 w-9" />
+              <ProductImage item={product} width={120} className="h-full w-full transition-transform duration-500 group-hover:scale-110" artClassName="h-9 w-9" />
             ) : null}
           </span>
           <span className="display whitespace-nowrap text-[20px] md:text-[24px]">{brand}</span>
@@ -62,7 +62,7 @@ export function TilePhoto({ item, wide, className = "" }: { item?: Product; wide
         wide ? "w-full max-w-md" : "w-48 sm:w-56 md:w-72"
       } ${className}`}
     >
-      <ProductImage placeholder="shimmer" item={item} width={500} className={`w-full ${wide ? "aspect-[16/10]" : "aspect-square"}`} artClassName="h-40 w-40" />
+      <ProductImage item={item} width={500} className={`w-full ${wide ? "aspect-[16/10]" : "aspect-square"}`} artClassName="h-40 w-40" />
     </div>
   );
 }
@@ -78,7 +78,7 @@ export function PhotoFan({ items, size = "md" }: { items: Product[]; size?: "sm"
           className={`photo-fan-card ${w} overflow-hidden rounded-xl bg-white shadow-[0_14px_30px_rgba(0,0,0,0.22)]`}
           style={{ "--fan": i - 1 } as CSSProperties}
         >
-          <ProductImage placeholder="shimmer" item={p} width={330} className="aspect-square w-full" artClassName="h-20 w-20" />
+          <ProductImage item={p} width={330} className="aspect-square w-full" artClassName="h-20 w-20" />
         </div>
       ))}
     </div>
@@ -158,7 +158,7 @@ export function CategoryTile({
             <Icon name={TONE_ICON[tone]} size={20} />
           </span>
           {item ? (
-            <ProductImage placeholder="shimmer"
+            <ProductImage
               item={item}
               width={500}
               className="aspect-[4/3] w-full transition-transform duration-700 ease-[cubic-bezier(.2,.8,.2,1)] group-hover:scale-[1.06]"

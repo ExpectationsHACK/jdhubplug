@@ -1,5 +1,6 @@
 "use client";
 
+import { toneOf } from "@/lib/tones";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { Product } from "@/lib/types";
@@ -19,7 +20,7 @@ import { prefersReducedMotion } from "./useMotion";
 // focusing a card brings it to the front, and the pause button stops all motion.
 // Under prefers-reduced-motion the ring is replaced by a static photo grid (CSS).
 
-export type OrbitProduct = Pick<Product, "id" | "name" | "price" | "photo" | "imageUrl" | "art" | "tint">;
+export type OrbitProduct = Pick<Product, "id" | "name" | "price" | "photo" | "imageUrl" | "art" | "tint"> & { category?: string };
 
 const MESSAGES = [
   {
@@ -276,7 +277,8 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
                   cardRefs.current[i] = el;
                 }}
                 className="orbit-card"
-                style={{ transform: pl.transform, zIndex: pl.z, "--shade": pl.shade, "--sheen": pl.sheen } as CSSProperties}
+                data-tone={p.category ? toneOf(p.category) : undefined}
+                style={{ transform: pl.transform, zIndex: pl.z, "--shade": pl.shade, "--sheen": pl.sheen, "--n": i } as CSSProperties}
               >
                 <Link
                   href={`/product/${p.id}`}
@@ -286,13 +288,13 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
                   className="orbit-link"
                 >
                   <span className="orbit-tile">
-                    <ProductImage placeholder="shimmer" item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
+                    <ProductImage item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
                     <span aria-hidden className="orbit-gloss" />
                     <span aria-hidden className="orbit-shade" />
                   </span>
                   <span aria-hidden className="orbit-reflect">
                     {/* Same URL as the tile above, so the browser reuses the download. */}
-                    <ProductImage placeholder="shimmer" item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
+                    <ProductImage item={p} width={500} priority className="h-full w-full" artClassName="h-4/5 w-4/5" />
                   </span>
                   <span className="orbit-label">
                     <span className="block truncate">{p.name}</span>
@@ -303,6 +305,13 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
             );
           })}
         </ul>
+      </div>
+
+      {/* Drifting sparks behind the ring: pure CSS, hidden for reduced motion. */}
+      <div aria-hidden className="orbit-sparks">
+        {Array.from({ length: 14 }, (_, i) => (
+          <i key={i} style={{ "--n": i } as CSSProperties} />
+        ))}
       </div>
 
       <div ref={copyRef} className="orbit-copy">
@@ -355,7 +364,7 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
         {items.slice(0, 8).map((p) => (
           <li key={p.id}>
             <Link href={`/product/${p.id}`} className="block overflow-hidden rounded-2xl bg-white">
-              <ProductImage placeholder="shimmer" item={p} width={330} className="aspect-square w-full" artClassName="h-4/5 w-4/5" />
+              <ProductImage item={p} width={330} className="aspect-square w-full" artClassName="h-4/5 w-4/5" />
             </Link>
             <p className="mt-2 truncate text-[12px] font-bold text-white/80">{p.name}</p>
           </li>
