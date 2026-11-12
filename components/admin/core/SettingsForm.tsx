@@ -90,7 +90,7 @@ export function SettingsForm({ settings, products, readOnly }: { settings: Setti
 
       {!readOnly && (
         <div
-          className={`sticky bottom-4 z-20 mt-8 transition-[opacity,transform] duration-300 motion-reduce:transition-none ${
+          className={`sticky bottom-4 z-20 mt-8 transition-[opacity,transform] duration-300 ${
             barVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
           }`}
           aria-hidden={!barVisible}
@@ -100,7 +100,7 @@ export function SettingsForm({ settings, products, readOnly }: { settings: Setti
             <p role="status" aria-live="polite" className="flex min-w-0 items-center gap-2 text-[14px] font-bold">
               {pending ? (
                 <>
-                  <AdminIcon name="refresh" size={16} className="motion-safe:animate-spin" /> Saving…
+                  <AdminIcon name="refresh" size={16} className="animate-spin" /> Saving…
                 </>
               ) : showError ? (
                 <>

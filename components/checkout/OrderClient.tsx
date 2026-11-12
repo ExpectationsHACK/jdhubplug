@@ -121,7 +121,7 @@ export function Celebration({ orderId }: { orderId: string }) {
     } catch {
       /* storage unavailable */
     }
-    if (!flagged || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!flagged) return;
     const on = setTimeout(() => setShow(true), 0);
     const off = setTimeout(() => setShow(false), 5200);
     return () => {

@@ -177,7 +177,7 @@ export function SwapPlanner({ products, whatsapp }: { products: SwapProduct[]; w
                   setTarget(s.id);
                   setStarting(false);
                 }}
-                className={`w-60 shrink-0 rounded-tile bg-stage p-5 text-left ring-accent transition hover:-translate-y-0.5 motion-reduce:transform-none ${pick.id === s.id ? "ring-2" : "hover:bg-[#ececec]"}`}
+                className={`w-60 shrink-0 rounded-tile bg-stage p-5 text-left ring-accent transition hover:-translate-y-0.5 ${pick.id === s.id ? "ring-2" : "hover:bg-[#ececec]"}`}
               >
                 <div className="aspect-square w-full overflow-hidden rounded-xl bg-white">
                   <ProductImage item={s} width={330} className="aspect-square w-full" artClassName="h-28 w-28" />

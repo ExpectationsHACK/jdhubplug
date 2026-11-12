@@ -656,7 +656,7 @@ function Row({ label, value, accent }: { label: string; value: string | null; ac
 }
 
 export function Spinner() {
-  return <span aria-hidden className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none" />;
+  return <span aria-hidden className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />;
 }
 
 export function CheckoutSkeleton() {

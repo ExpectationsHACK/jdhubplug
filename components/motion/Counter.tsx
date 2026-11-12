@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { prefersReducedMotion } from "./useMotion";
 
 /**
  * Number that counts up when it scrolls into view. The server renders the final
@@ -23,7 +22,7 @@ export function Counter({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || prefersReducedMotion() || !("IntersectionObserver" in window)) return;
+    if (!el || !("IntersectionObserver" in window)) return;
     const fmt = (n: number) => `${prefix}${Math.round(n).toLocaleString("en-NG")}${suffix}`;
     // Already on screen at hydration: leave the real number alone (no flash).
     const r = el.getBoundingClientRect();

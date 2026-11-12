@@ -1,7 +1,7 @@
 // Keyframes and classes for the offer experience (hero entrance, flip-clock digits,
 // banner, toast). Rendered as a React 19 hoisted <style> (deduped by href), so any
 // offer component can include <OfferStyles /> without touching app/globals.css.
-// Every animation is switched off under prefers-reduced-motion.
+// Animations are always on (owner's choice): no reduced-motion switch.
 
 const css = `
 @keyframes jdo-hero-in {
@@ -90,14 +90,6 @@ const css = `
 
 .jdo-tilt { transition: transform .25s ease-out; transform-style: preserve-3d; will-change: transform; }
 
-@media (prefers-reduced-motion: reduce) {
-  .jdo-hero-in, .jdo-float, .jdo-glow, .jdo-spin, .jdo-ring, .jdo-rise, .jdo-pop, .jdo-sparkle,
-  .jdo-banner-in, .jdo-toast-in, .jdo-marquee, .jdo-flap-top, .jdo-flap-bottom, .jdo-shine::after {
-    animation: none !important;
-  }
-  .jdo-flap-top, .jdo-flap-bottom { display: none; }
-  .jdo-tilt { transition: none; transform: none !important; }
-}
 `;
 
 export function OfferStyles() {

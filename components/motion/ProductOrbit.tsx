@@ -8,7 +8,6 @@ import { ProductImage } from "../ProductImage";
 import { shortNaira } from "../home/format";
 import { Icon } from "../Icon";
 import { Magnetic } from "./Magnetic";
-import { prefersReducedMotion } from "./useMotion";
 
 // "Product orbit" hero: real product photos float on a 3D ring around the headline.
 //
@@ -18,7 +17,6 @@ import { prefersReducedMotion } from "./useMotion";
 // transform, one overlay opacity and (rarely) a z-index per card — compositor-only
 // properties, no layout. Drag/swipe spins it with inertia, the pointer tilts it,
 // focusing a card brings it to the front, and the pause button stops all motion.
-// Under prefers-reduced-motion the ring is replaced by a static photo grid (CSS).
 
 export type OrbitProduct = Pick<Product, "id" | "name" | "price" | "photo" | "imageUrl" | "art" | "tint"> & { category?: string };
 
@@ -97,7 +95,7 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
 
   // Headline word swap.
   useEffect(() => {
-    if (paused || prefersReducedMotion()) return;
+    if (paused) return;
     const t = setTimeout(() => {
       setPrev(msg);
       setMsg((m) => (m + 1) % MESSAGES.length);
@@ -109,7 +107,7 @@ export function ProductOrbit({ products }: { products: OrbitProduct[] }) {
   useEffect(() => {
     const hero = heroRef.current;
     const stage = stageRef.current;
-    if (!hero || !stage || prefersReducedMotion()) return;
+    if (!hero || !stage) return;
     const st = state.current;
     let raf = 0;
     let running = false;

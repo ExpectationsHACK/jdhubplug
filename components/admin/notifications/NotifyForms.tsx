@@ -18,10 +18,10 @@ function Status({ state, pending, pendingText }: { state: NotifyActionState; pen
     <p role="status" aria-live="polite" className="flex min-h-5 min-w-0 items-center gap-1.5 text-[13px] font-bold">
       {pending ? (
         <>
-          <AdminIcon name="refresh" size={15} className="motion-safe:animate-spin" /> {pendingText}
+          <AdminIcon name="refresh" size={15} className="animate-spin" /> {pendingText}
         </>
       ) : state.message ? (
-        <span key={state.at} className={`flex items-center gap-1.5 motion-safe:animate-[fade-in_.3s_ease_both] ${state.ok ? "text-ok" : "text-sale"}`}>
+        <span key={state.at} className={`flex items-center gap-1.5 animate-[fade-in_.3s_ease_both] ${state.ok ? "text-ok" : "text-sale"}`}>
           <AdminIcon name={state.ok ? "check" : "alert"} size={15} className="shrink-0" /> {state.message}
         </span>
       ) : null}
@@ -42,7 +42,7 @@ function Toggle({ name, label, defaultChecked, disabled }: { name: string; label
         disabled={disabled}
         className="peer h-7 w-12 cursor-pointer appearance-none rounded-full bg-[#d4d4d4] outline-none transition-colors checked:bg-ink focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       />
-      <span aria-hidden className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5 motion-reduce:transition-none" />
+      <span aria-hidden className="pointer-events-none absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5" />
     </span>
   );
 }

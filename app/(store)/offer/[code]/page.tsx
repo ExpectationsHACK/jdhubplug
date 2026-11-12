@@ -108,7 +108,7 @@ async function OfferLanding({ params }: { params: PageProps<"/offer/[code]">["pa
         <div className="wrap relative grid items-center gap-8 py-12 md:grid-cols-[1.05fr_1fr] md:gap-12 md:py-20">
           <div className="min-w-0">
             <p className="jdo-rise inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.16em] backdrop-blur">
-              <span className={`h-2 w-2 rounded-full ${scheduled ? "bg-[#f5c06b]" : "animate-pulse bg-[#3ddc84] motion-reduce:animate-none"}`} />
+              <span className={`h-2 w-2 rounded-full ${scheduled ? "bg-[#f5c06b]" : "animate-pulse bg-[#3ddc84]"}`} />
               {scheduled ? "Coming soon" : "Live offer"} · {offer.title}
             </p>
             <h1 className="jdo-rise display mt-5 text-[36px] leading-[1.05] [animation-delay:120ms] sm:text-[48px] lg:text-[60px]">
