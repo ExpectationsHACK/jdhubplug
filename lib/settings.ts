@@ -6,7 +6,7 @@ import type { Settings } from "./types";
 export const DEFAULT_SETTINGS: Settings = {
   storeName: "JDHub",
   whatsapp: "2349163216445",
-  phone: "+234 800 000 0000",
+  phone: "+234 916 321 6445",
   email: "hello@jdhub.ng",
   promoText: "Every order escrow-protected. Get paid within 48 hours when you sell.",
   promoLink: "/trust",
@@ -35,7 +35,8 @@ export function withDefaults(s: Partial<Settings> | null | undefined): Settings 
     bank: { ...DEFAULT_SETTINGS.bank, ...(s?.bank ?? {}) },
     hubs: s?.hubs?.length ? s.hubs : DEFAULT_SETTINGS.hubs,
     heroProductIds: s?.heroProductIds ?? [],
-    // Saved settings that still hold the old placeholder number get the real one.
+    // Saved settings that still hold the old placeholder numbers get the real ones.
+    phone: !s?.phone || s.phone.replace(/\D/g, "") === "2348000000000" ? DEFAULT_SETTINGS.phone : s.phone,
     whatsapp: !s?.whatsapp || s.whatsapp.replace(/\D/g, "") === "2348000000000" ? DEFAULT_SETTINGS.whatsapp : s.whatsapp,
   };
 }
