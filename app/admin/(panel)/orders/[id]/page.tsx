@@ -301,7 +301,6 @@ function Stepper({ status, history }: { status: OrderStatus; history: OrderEvent
         .adm-step-current { position: relative; overflow: hidden; }
         .adm-step-current::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform: translateX(-100%); animation: adm-step-shine 2.4s ease-in-out infinite; }
         @keyframes adm-step-shine { to { transform: translateX(100%); } }
-        @media (prefers-reduced-motion: reduce) { .adm-step-current::after { animation: none; display: none; } }
       `}</style>
     </ol>
   );

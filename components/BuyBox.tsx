@@ -218,7 +218,7 @@ function StockBadge({ stock }: { stock: number }) {
   return (
     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-bold ${stock === 1 ? "bg-sale/10 text-sale" : "bg-stage text-ink"}`}>
       <span className="relative flex h-2 w-2">
-        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden ${stock === 1 ? "bg-sale" : "bg-ok"}`} />
+        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${stock === 1 ? "bg-sale" : "bg-ok"}`} />
         <span className={`relative inline-flex h-2 w-2 rounded-full ${stock === 1 ? "bg-sale" : "bg-ok"}`} />
       </span>
       {stock === 1 ? "Only 1 left" : `${stock} in stock`}

@@ -2,7 +2,7 @@ import { AdminPage } from "../ui";
 
 // Loading placeholders for the order, customer and request screens.
 
-const bar = "animate-pulse rounded-lg bg-line/70 motion-reduce:animate-none";
+const bar = "animate-pulse rounded-lg bg-line/70";
 
 export function ListSkeleton({ stats = 0, rows = 8 }: { stats?: number; rows?: number }) {
   return (
@@ -13,7 +13,7 @@ export function ListSkeleton({ stats = 0, rows = 8 }: { stats?: number; rows?: n
         {stats > 0 && (
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: stats }).map((_, i) => (
-              <div key={i} className="h-[104px] animate-pulse rounded-2xl border border-line bg-white motion-reduce:animate-none" />
+              <div key={i} className="h-[104px] animate-pulse rounded-2xl border border-line bg-white" />
             ))}
           </div>
         )}
@@ -49,12 +49,12 @@ export function DetailSkeleton() {
         <div className={`${bar} mt-3 h-8 w-56`} />
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-4">
-            <div className="h-56 animate-pulse rounded-2xl border border-line bg-white motion-reduce:animate-none" />
-            <div className="h-72 animate-pulse rounded-2xl border border-line bg-white motion-reduce:animate-none" />
+            <div className="h-56 animate-pulse rounded-2xl border border-line bg-white" />
+            <div className="h-72 animate-pulse rounded-2xl border border-line bg-white" />
           </div>
           <div className="space-y-4">
-            <div className="h-48 animate-pulse rounded-2xl border border-line bg-white motion-reduce:animate-none" />
-            <div className="h-40 animate-pulse rounded-2xl border border-line bg-white motion-reduce:animate-none" />
+            <div className="h-48 animate-pulse rounded-2xl border border-line bg-white" />
+            <div className="h-40 animate-pulse rounded-2xl border border-line bg-white" />
           </div>
         </div>
         <span className="sr-only">Loading…</span>

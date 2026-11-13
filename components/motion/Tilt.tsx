@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, type HTMLAttributes } from "react";
-import { prefersReducedMotion } from "./useMotion";
 
 /**
  * 3D tilt with a glare highlight that follows the pointer (mouse only). The element
@@ -19,7 +18,7 @@ export function Tilt({
   const frame = useRef(0);
 
   const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse" || prefersReducedMotion()) return;
+    if (e.pointerType !== "mouse") return;
     const el = ref.current;
     if (!el) return;
     const { clientX, clientY } = e;

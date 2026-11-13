@@ -68,9 +68,6 @@ export function Dialog({
         .adm-dialog[open]::backdrop { animation: adm-fade-in .18s ease; }
         @keyframes adm-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
         @keyframes adm-fade-in { from { opacity: 0; } }
-        @media (prefers-reduced-motion: reduce) {
-          .adm-dialog[open], .adm-dialog[open]::backdrop { animation: none; }
-        }
       `}</style>
     </dialog>
   );

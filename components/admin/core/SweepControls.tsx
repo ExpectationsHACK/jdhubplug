@@ -48,7 +48,7 @@ export function SweepButton() {
         disabled={pending}
         className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12px] font-bold outline-none transition-colors hover:border-ink focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
       >
-        <AdminIcon name="refresh" size={13} className={pending ? "motion-safe:animate-spin" : ""} />
+        <AdminIcon name="refresh" size={13} className={pending ? "animate-spin" : ""} />
         {pending ? "Running…" : "Run clean-up now"}
       </button>
       <span aria-live="polite" className="text-[12px] text-muted">

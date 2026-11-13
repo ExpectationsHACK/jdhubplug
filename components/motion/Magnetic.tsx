@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { prefersReducedMotion } from "./useMotion";
 
 /**
  * Pulls its child a few pixels toward the pointer while hovered, then springs back.
@@ -20,7 +19,7 @@ export function Magnetic({
 
   const onMove = (e: React.PointerEvent<HTMLSpanElement>) => {
     const el = ref.current;
-    if (!el || e.pointerType !== "mouse" || prefersReducedMotion()) return;
+    if (!el || e.pointerType !== "mouse") return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - (r.left + r.width / 2)) * strength;
     const y = (e.clientY - (r.top + r.height / 2)) * strength;

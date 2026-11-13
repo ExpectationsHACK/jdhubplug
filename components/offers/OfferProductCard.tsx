@@ -26,7 +26,7 @@ export function OfferProductCard({
   return (
     <div
       data-product-card
-      className="jdo-rise group flex h-full flex-col rounded-tile bg-stage p-4 transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.1)] motion-reduce:hover:translate-y-0 sm:p-5"
+      className="jdo-rise group flex h-full flex-col rounded-tile bg-stage p-4 transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.1)] sm:p-5"
       style={{ animationDelay: `${Math.min(index, 11) * 60}ms` }}
     >
       <div className="flex min-h-6 items-start justify-between gap-2">
@@ -45,7 +45,7 @@ export function OfferProductCard({
         <ProductImage
           item={p}
           width={500}
-          className={`aspect-square w-full transition-transform duration-500 group-hover:scale-[1.05] motion-reduce:group-hover:scale-100 ${soldOut ? "opacity-50 grayscale" : ""}`}
+          className={`aspect-square w-full transition-transform duration-500 group-hover:scale-[1.05] ${soldOut ? "opacity-50 grayscale" : ""}`}
           artClassName="h-40 w-40"
         />
       </Link>

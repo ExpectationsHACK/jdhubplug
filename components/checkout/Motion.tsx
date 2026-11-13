@@ -46,13 +46,6 @@ const css = `
 .jdc-check path { stroke-dasharray: var(--len, 60); animation: jdc-draw .6s cubic-bezier(.65,0,.35,1) .35s both; }
 .jdc-bar { transition: width .7s cubic-bezier(.2,.8,.2,1); }
 
-@media (prefers-reduced-motion: reduce) {
-  .jdc-in-right, .jdc-in-up, .jdc-pop, .jdc-shake, .jdc-grow, .jdc-grow-y, .jdc-ping, .jdc-skeleton,
-  .jdc-collapse[data-leaving="true"] > *, .jdc-check path { animation: none !important; }
-  .jdc-collapse, .jdc-bar { transition: none !important; }
-  .jdc-grow { transform: scaleX(var(--p, 1)); }
-  .jdc-grow-y { transform: scaleY(var(--p, 1)); }
-}
 `;
 
 export function CommerceMotion() {

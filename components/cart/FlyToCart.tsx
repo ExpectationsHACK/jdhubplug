@@ -67,9 +67,8 @@ export function FlyToCart() {
     const onFly = (e: Event) => {
       const { rect, imageSrc } = (e as CustomEvent<{ rect: DOMRect; imageSrc?: string }>).detail;
       const target = document.querySelector("[data-cart-target]");
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const t = target?.getBoundingClientRect();
-      if (!t || !t.width || reduce || !rect.width) return bump();
+      if (!t || !t.width || !rect.width) return bump();
 
       const size = Math.max(56, Math.min(rect.width, rect.height, 200));
       const x0 = rect.left + rect.width / 2;

@@ -69,7 +69,7 @@ export function LoginForm({ next, devHint, notice }: { next: Promise<string>; de
       <button disabled={pending} className="btn btn-primary btn-lg w-full">
         {pending ? (
           <>
-            <AdminIcon name="refresh" size={16} className="motion-safe:animate-spin" /> Signing in…
+            <AdminIcon name="refresh" size={16} className="animate-spin" /> Signing in…
           </>
         ) : (
           <>

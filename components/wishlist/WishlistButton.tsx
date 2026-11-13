@@ -20,7 +20,7 @@ export function WishlistButton({ product, className = "", size = 20, withLabel =
       onClick={() => toggle(product)}
       className={`inline-flex items-center gap-1.5 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-accent ${saved ? "text-sale" : "text-muted hover:text-ink"} ${className}`}
     >
-      <Icon name="heart" size={size} className={`transition-transform motion-safe:active:scale-90 ${saved ? "fill-current" : ""}`} />
+      <Icon name="heart" size={size} className={`transition-transform active:scale-90 ${saved ? "fill-current" : ""}`} />
       {withLabel && <span className="text-[14px] font-bold text-ink">{saved ? "Saved" : "Save"}</span>}
     </button>
   );

@@ -106,8 +106,9 @@ icons use 1.25px. The only filled mark is the WhatsApp glyph.
 
 Reveal on scroll, product tilt, magnetic buttons, spotlight, product orbit, counters, marquee, page transitions,
 fly-to-cart, card glow and light sweep, icon pop on hover, drifting banner colour, floating banner icons, pulsing
-deal badges. Every animation respects `prefers-reduced-motion`. Motion supports the product; it never blocks
-input or delays content.
+deal badges. Animations are always on, whatever the device's reduce-motion setting (the owner's decision, November
+2026): don't add `prefers-reduced-motion` or `motion-reduce:` switches. Motion supports the product; it never
+blocks input or delays content.
 
 **Photos, never mock-ups, in motion.** Product images show a soft shimmer while loading. Animations and showcases
 (`placeholder="shimmer"`) never show the drawn illustration; ordinary cards fall back to it only if every photo

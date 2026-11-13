@@ -137,7 +137,7 @@ export function AdminNav({
                         on ? "bg-ink text-white shadow-[0_6px_16px_-8px_rgba(0,0,0,0.5)]" : "text-ink-2 hover:bg-stage hover:text-ink"
                       }`}
                     >
-                      <span data-tone={NAV_TONE[i.href]} className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-200 motion-safe:group-hover:scale-110 ${on ? "bg-white/15" : "bg-tone-soft text-tone"}`}>
+                      <span data-tone={NAV_TONE[i.href]} className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-200 group-hover:scale-110 ${on ? "bg-white/15" : "bg-tone-soft text-tone"}`}>
                         <AdminIcon name={i.icon} size={17} />
                       </span>
                       <span className="flex-1 truncate">{i.label}</span>
@@ -194,7 +194,7 @@ export function AdminNav({
         <div
           aria-hidden
           onClick={close}
-          className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none ${
+          className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
             open ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         />
@@ -204,7 +204,7 @@ export function AdminNav({
           role="dialog"
           aria-modal="true"
           aria-label="Admin menu"
-          className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,86vw)] flex-col overflow-y-auto bg-white px-3 pb-4 pt-4 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+          className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,86vw)] flex-col overflow-y-auto bg-white px-3 pb-4 pt-4 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)] ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -235,7 +235,7 @@ function NavBadge({ badges, href, on }: { badges: Badges | Promise<Badges>; href
   if (!n) return null;
   return (
     <span
-      className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold tabular-nums motion-safe:animate-[fade-in_.3s_ease_both] ${
+      className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold tabular-nums animate-[fade-in_.3s_ease_both] ${
         on ? "bg-white/20 text-white" : "bg-accent text-white"
       }`}
     >

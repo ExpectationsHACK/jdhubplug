@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { prefersReducedMotion } from "./useMotion";
 
 /**
  * Fallback for browsers without CSS scroll-driven animations: writes the section's
@@ -13,7 +12,7 @@ export function SpotlightDriver() {
 
   useEffect(() => {
     const section = ref.current?.closest<HTMLElement>("[data-spot]");
-    if (!section || prefersReducedMotion()) return;
+    if (!section) return;
     if (typeof CSS !== "undefined" && CSS.supports("animation-timeline: view()")) return;
 
     section.classList.add("spot-js");

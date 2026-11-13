@@ -676,7 +676,7 @@ export function ProductsTable({
 
   function goPage(n: number) {
     setF((prev) => ({ ...prev, page: n }));
-    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 

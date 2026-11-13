@@ -29,7 +29,7 @@ export function CartButton() {
         <span
           key={`r${bump}`}
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 rounded-full bg-accent/25 motion-reduce:hidden"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 rounded-full bg-accent/25"
           style={{ animation: "jdc-burst .7s cubic-bezier(.2,.8,.2,1) both" }}
         />
       )}

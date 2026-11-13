@@ -262,11 +262,6 @@ body {
 .fade-in {
   animation: fade-in 0.5s ease both;
 }
-@media (prefers-reduced-motion: reduce) {
-  .fade-in {
-    animation: none;
-  }
-}
 
 /* Cart feedback: the icon jolts and the badge pops when a product lands. */
 @keyframes cart-bump {
@@ -282,9 +277,6 @@ body {
 }
 .cart-bump { animation: cart-bump 0.55s cubic-bezier(.3,1.6,.5,1); }
 .cart-pop { animation: cart-pop 0.45s cubic-bezier(.3,1.6,.5,1); }
-@media (prefers-reduced-motion: reduce) {
-  .cart-bump, .cart-pop { animation: none; }
-}
 
 /* Admin tables */
 .adm-table thead th {
@@ -1026,8 +1018,7 @@ body {
 /* ------------------------------------------------- Scroll-driven animations (CSS) */
 
 @supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .scroll-progress {
+      .scroll-progress {
       display: block;
       animation: grow-x linear both;
       animation-timeline: scroll(root block);
@@ -1088,7 +1079,7 @@ body {
       animation-timeline: --spot;
       animation-range: contain 68% contain 80%;
     }
-  }
+  
 }
 
 /* ------------------------------------------------------------ View transitions */
@@ -1131,76 +1122,6 @@ body {
 
 /* ------------------------------------------------------------- Reduced motion */
 
-@media (prefers-reduced-motion: reduce) {
-  .tilt {
-    transform: none !important;
-  }
-  .tilt-glare,
-  .orbit-stage,
-  .orbit-hint,
-  .orbit-pause {
-    display: none;
-  }
-  .overlay-in,
-  .drawer-in,
-  .sheet-up,
-  .sheet-down,
-  .mega-in,
-  .mega-card,
-  .quick-link,
-  .wa-fab,
-  .float-a,
-  .float-b,
-  .tradeup-glow,
-  .orbit-glow,
-  .orbit-eyebrow,
-  .orbit-title-2,
-  .skeleton::after {
-    animation: none;
-  }
-  .marquee {
-    overflow-x: auto;
-    mask-image: none;
-  }
-  .marquee-track {
-    animation: none;
-  }
-  .marquee-group[aria-hidden] {
-    display: none;
-  }
-  .photo-fan-card,
-  .group:hover .photo-fan-card {
-    transition: none;
-  }
-  .orbit-hero {
-    height: auto;
-    min-height: 0;
-    max-height: none;
-    padding: 56px 0 48px;
-  }
-  .orbit-grid {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    width: min(calc(100% - 32px), 760px);
-    margin-top: 40px;
-  }
-  @media (min-width: 640px) {
-    .orbit-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  }
-  .swap-char,
-  .swap-sub {
-    transition: none;
-  }
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-  }
-}
 
 /* ---- Page header photo collage (components/PageHero.tsx). */
 @keyframes deal-in {
@@ -1218,12 +1139,6 @@ body {
 .collage-float {
   animation: bob 6s ease-in-out infinite;
   animation-delay: calc(var(--o, 0) * -1.3s);
-}
-@media (prefers-reduced-motion: reduce) {
-  .collage-card,
-  .collage-float {
-    animation: none;
-  }
 }
 
 /* ------------------------------------------------------------------ Colour tones
@@ -1393,22 +1308,6 @@ body {
   background: var(--tone);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aurora::before,
-  .aurora::after,
-  .float-icon,
-  .pulse-ring::after,
-  .group:hover .tone-badge > svg {
-    animation: none;
-  }
-  .shine::after {
-    display: none;
-  }
-  .tone-card,
-  .tone-badge {
-    transition: none;
-  }
-}
 
 /* ---------------------------------------------------------------- Home, livelier */
 
@@ -1484,13 +1383,12 @@ body {
 
 /* Product photos settle in (a slow zoom-out) as their card scrolls into view. */
 @supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal .product-card-media > * {
+      .reveal .product-card-media > * {
       animation: photo-settle linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 90%;
     }
-  }
+  
 }
 @keyframes photo-settle {
   from { scale: 1.18; filter: saturate(0.6); }
@@ -1504,15 +1402,3 @@ body {
   50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--tone) 12%, transparent); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .orbit-link,
-  .orbit-sparks i,
-  .swap-word.is-active .swap-char,
-  .quick-link .tone-badge,
-  .tone-card .tone-badge {
-    animation: none;
-  }
-  .orbit-sparks {
-    display: none;
-  }
-}

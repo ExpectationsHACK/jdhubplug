@@ -1,4 +1,4 @@
-/* Motion for the admin core. Every animation is disabled under prefers-reduced-motion. */
+/* Motion for the admin core. Always on (owner's choice): no reduced-motion switch. */
 
 @keyframes grow {
   from {
@@ -97,20 +97,3 @@
   border-color: #c9c9c9;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .bar,
-  .rise,
-  .float,
-  .sheen,
-  .pop {
-    animation: none;
-  }
-  .sheen {
-    display: none;
-  }
-  .lift,
-  .lift:hover {
-    transition: none;
-    transform: none;
-  }
-}

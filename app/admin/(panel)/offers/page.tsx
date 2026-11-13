@@ -222,7 +222,7 @@ function OfferRow({
                 {o.title}
               </Link>
               <Badge tone={STATE_TONE[state]}>
-                {state === "live" && <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-ok motion-reduce:animate-none" />}
+                {state === "live" && <span aria-hidden className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-ok" />}
                 {STATE_LABEL[state]}
               </Badge>
             </div>

@@ -42,7 +42,6 @@ export function CartDrawer() {
   }, [isOpen, close]);
 
   const removeAnimated = (id: string) => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return remove(id);
     setLeaving((l) => [...l, id]);
     setTimeout(() => {
       remove(id);
@@ -58,7 +57,7 @@ export function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Cart"
-        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-white transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] ${
           isOpen ? "translate-x-0 shadow-2xl" : "translate-x-full shadow-none"
         }`}
       >
