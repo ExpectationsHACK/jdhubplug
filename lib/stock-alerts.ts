@@ -180,7 +180,7 @@ function matchFor(a: StockAlert, byModel: Map<string, Product[]>): Product | nul
   return fresh.find((p) => p.id === a.productId) ?? fresh.sort((x, y) => x.price - y.price)[0] ?? null;
 }
 
-async function deliver(a: StockAlert, p: Product, storeName: string): Promise<MessageResult> {
+async function deliver(a: StockAlert, p: Product, storeName: string, replyTo?: string): Promise<MessageResult> {
   const url = absoluteUrl(`/product/${encodeURIComponent(p.id)}`);
   if (a.channel === "sms") {
     return sendSms(a.contact, `${storeName}: ${p.name} is back in stock at ${formatNaira(p.price)}. Graded units go fast: ${url}`);
@@ -198,7 +198,7 @@ async function deliver(a: StockAlert, p: Product, storeName: string): Promise<Me
     footer: `You asked ${escapeHtml(storeName)} to tell you when this was back in stock. This is a one-time message for this request.`,
   });
   const text = `Good news: ${p.name} (${p.spec}) is back in stock at ${formatNaira(p.price)}.\n\nView it: ${url}\n\nYou asked ${storeName} to tell you when this was back. This is a one-time message.`;
-  return sendEmail({ to: a.contact, subject: `Back in stock: ${p.name}`, html, text });
+  return sendEmail({ to: a.contact, subject: `Back in stock: ${p.name}`, html, text, replyTo });
 }
 
 export type ProcessResult = { busy?: boolean; matched: number; sent: number; skipped: number; failed: number; retrying: number; remaining: number };
@@ -228,7 +228,7 @@ export async function processStockAlerts(opts: { model?: string } = {}): Promise
       res.matched = due.length;
       if (!due.length) return res;
 
-      const { storeName } = await getSettings();
+      const { storeName, email: storeEmail } = await getSettings();
       const d = getDriver();
       // Oldest requests first.
       due.sort((x, y) => x.a.createdAt.localeCompare(y.a.createdAt));
@@ -240,7 +240,7 @@ export async function processStockAlerts(opts: { model?: string } = {}): Promise
         // Re-read: an admin may have deleted it meanwhile.
         const cur = await getStockAlert(a.id);
         if (!cur || cur.status !== "waiting") continue;
-        const r = await deliver(cur, p, storeName).catch((e): MessageResult => ({ ok: false, error: e instanceof Error ? e.message : "send failed" }));
+        const r = await deliver(cur, p, storeName, storeEmail || undefined).catch((e): MessageResult => ({ ok: false, error: e instanceof Error ? e.message : "send failed" }));
         const attempts = cur.attempts + 1;
         let next: StockAlert;
         if (r.ok) {
